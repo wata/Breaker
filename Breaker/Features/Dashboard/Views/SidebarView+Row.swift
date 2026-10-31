@@ -45,7 +45,9 @@ extension MonitoredItem {
         if let reason = status.reason {
             return showsKind ? Self.joined(kind.shortTitle, reason, locale: locale) : reason
         }
-        guard let dates = runDates(now: now) else { return nil }
+        guard let dates = runDates(now: now) else {
+            return nil
+        }
         return dates.next.map { Self.nextRunText($0, now: now, calendar: calendar, locale: locale) }
             ?? dates.last.map { Self.lastRunText($0, style: .relative, now: now, calendar: calendar, locale: locale) }
     }

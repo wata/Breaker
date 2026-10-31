@@ -8,7 +8,9 @@ enum LogReader {
     /// ファイルがなければ nil。メインスレッドを止めないよう、呼び出し元のアクターから外して読む
     @concurrent
     static func tail(of path: String, lineCount: Int) async throws -> String? {
-        guard FileManager.default.fileExists(atPath: path) else { return nil }
+        guard FileManager.default.fileExists(atPath: path) else {
+            return nil
+        }
         let handle = try FileHandle(forReadingFrom: URL(filePath: path))
         defer { try? handle.close() }
         let size = try handle.seekToEnd()

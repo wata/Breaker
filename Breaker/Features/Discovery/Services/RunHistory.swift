@@ -13,6 +13,14 @@ actor RunHistory {
         let runs: Int
         /// nil は見張りを始めてから一度も実行を見ていないこと
         let lastObservedRun: Date?
+        /// 次に runs の変化を見たとき、その実行はこの時刻より後に始まっている
+        let lastObservation: Date
+        /**
+         最後の実行が始まったのはこれより後（実行を見た1つ前に取り直した時刻）。これより前に書かれたログは前の実行のもの。
+         launchd は起動のたびにログを追記で開くだけで更新時刻を変えないので、正常なときに何も書かないジョブの標準エラーには、
+         直した後も前の失敗が残り続ける
+         */
+        let lastRunNotBefore: Date?
     }
 
     private var records: [String: Record] = [:]
@@ -30,8 +38,15 @@ actor RunHistory {
             return nil
         }
         guard let record else {
-            return Record(watchStart: now, runs: runs, lastObservedRun: nil)
+            return Record(watchStart: now, runs: runs, lastObservedRun: nil, lastObservation: now, lastRunNotBefore: nil)
         }
-        return Record(watchStart: record.watchStart, runs: runs, lastObservedRun: runs == record.runs ? record.lastObservedRun : now)
+        let didRun = runs != record.runs
+        return Record(
+            watchStart: record.watchStart,
+            runs: runs,
+            lastObservedRun: didRun ? now : record.lastObservedRun,
+            lastObservation: now,
+            lastRunNotBefore: didRun ? record.lastObservation : record.lastRunNotBefore
+        )
     }
 }

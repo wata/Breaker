@@ -166,7 +166,7 @@ struct LaunchAgentSource: ItemSource {
             let record = await runHistory.observe(key: key, runs: service?.runs, now: now)
             lastRun = [logModificationDate, record?.lastObservedRun].compactMap { $0 }.max()
             // ログを読むのは C の対象（直前の終了コードが 0）のときだけにして、ジョブの数だけ読まない
-            let logError = isChecked && service?.lastExit == .code(0) ? await Self.logError(of: job) : nil
+            let logError = isChecked && service?.lastExit == .code(0) ? await Self.logError(of: job, writtenSince: record?.lastRunNotBefore) : nil
             status = Self.status(
                 isDisabledFile: job.isDisabledFile,
                 isDisabledLabel: isDisabledLabel,
@@ -211,10 +211,16 @@ struct LaunchAgentSource: ItemSource {
         )
     }
 
-    /// 標準エラーを先に見る。原因は標準エラーに出ることが多い
-    private static func logError(of job: Job) async -> String? {
+    /// 標準エラーを先に見る。原因は標準エラーに出ることが多い。最後の実行より前に書かれたログは、直した後の古い失敗なので見ない
+    private static func logError(of job: Job, writtenSince lastRunNotBefore: Date?) async -> String? {
         // 標準出力と標準エラーを同じファイルに出すジョブは1回だけ読む
         let paths = [job.standardErrorPath, job.standardOutPath].compactMap { $0 }.uniqued()
+            .filter { path in
+                guard let lastRunNotBefore else {
+                    return true
+                }
+                return LogReader.lastModificationDate(of: [path]).map { $0 >= lastRunNotBefore } ?? false
+            }
         return HealthCheck.logError(in: await LogReader.tails(of: paths, lineCount: HealthCheck.logLineCount))
     }
 }
