@@ -3,6 +3,17 @@
     <channel>
         <title>Breaker</title>
         <item>
+            <title>1.1.1</title>
+            <pubDate>Sun, 01 Nov 2026 04:25:01 +0900</pubDate>
+            <sparkle:version>3</sparkle:version>
+            <sparkle:shortVersionString>1.1.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description sparkle:format="markdown"><![CDATA[- An old error left in a job's log no longer marks it as failed again after Breaker restarts or updates.
+- A job that is working no longer shows an old log line as the cause of a failure.
+]]></description>
+            <enclosure url="https://github.com/wata/Breaker/releases/download/1.1.1/Breaker-1.1.1.zip" length="4570138" type="application/octet-stream" sparkle:edSignature="YK2jRhp1SUO+F6w9Y+EufWuKUZ/nSmshLSWIWBqPF9F9Gmujr7iPtAU3YF75PhEa4XmMlBxIPRKOagkJM4BJAw=="/>
+        </item>
+        <item>
             <title>1.1.0</title>
             <pubDate>Sun, 01 Nov 2026 03:46:30 +0900</pubDate>
             <sparkle:version>2</sparkle:version>
