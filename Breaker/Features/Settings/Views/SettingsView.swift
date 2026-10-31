@@ -108,8 +108,8 @@ extension SettingsView {
     }
 
     /**
-     削除のボタンはカーソルを合わせたときと、キーボードで行を選んだとき（Tab で移って Delete で消せる）にだけ出す。
-     VoiceOver ではボタンが見えなくても、行の操作と右クリックメニューから消せる。
+     削除のボタンはカーソルを合わせたときだけ出す。行をフォーカスできるようにすると、設定を開いたときに最初の行へ
+     フォーカスが当たって枠とボタンが出てしまうので、キーボードと VoiceOver では右クリックメニューと行の操作から消す。
      アプリが見つからない行は、選んだことは残したまま、汎用のアイコンを薄くして見つからないことを言う
      */
     struct MonitoredAppRow: View {
@@ -117,7 +117,6 @@ extension SettingsView {
         let remove: () -> Void
 
         @State private var isHovering = false
-        @FocusState private var isFocused: Bool
 
         var body: some View {
             HStack(spacing: Spacing.tight) {
@@ -146,7 +145,7 @@ extension SettingsView {
 
                 Spacer()
 
-                if isHovering || isFocused {
+                if isHovering {
                     Button("Remove", systemImage: "minus.circle", action: remove)
                         .labelStyle(.iconOnly)
                         .buttonStyle(.borderless)
@@ -155,9 +154,6 @@ extension SettingsView {
             }
             .contentShape(.rect)
             .onHover { isHovering = $0 }
-            .focusable()
-            .focused($isFocused)
-            .onDeleteCommand(perform: remove)
             .contextMenu {
                 Button("Remove", action: remove)
             }
