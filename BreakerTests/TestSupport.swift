@@ -87,7 +87,8 @@ struct TemporaryDirectory: ~Copyable {
 /// テストごとに作って消す UserDefaults の suite。実際のアプリの設定に書き込まない
 struct IsolatedDefaults: ~Copyable {
     let userDefaults: UserDefaults
-    private let suiteName = "BreakerTests-\(UUID().uuidString)"
+    /// アプリを開き直したときのように、同じ suite を別のインスタンスで開くのに使う
+    let suiteName = "BreakerTests-\(UUID().uuidString)"
 
     init() throws {
         userDefaults = try #require(UserDefaults(suiteName: suiteName))

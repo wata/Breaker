@@ -26,7 +26,7 @@ struct LaunchAgentSource: ItemSource {
         launchctl: LaunchctlService = LaunchctlService(),
         homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
         rootDirectory: URL = URL(filePath: "/", directoryHint: .isDirectory),
-        runHistory: RunHistory = RunHistory(),
+        runHistory: RunHistory = RunHistory(defaults: .standard),
         bootTime: @escaping @Sendable () -> Date? = BootTime.current
     ) {
         self.launchctl = launchctl
