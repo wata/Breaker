@@ -60,11 +60,15 @@ struct FolderActionSourceTests {
         let scripts = directory.url.appending(path: "Library/Scripts/Folder Action Scripts", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: scripts, withIntermediateDirectories: true)
         try Data().write(to: scripts.appending(path: "x.scpt"))
-        let output = "true\nHere\t\(existing)\ttrue\tx.scpt\nGone\t/Volumes/not-mounted-\(UUID())\ttrue\t\nRenamed\t\(existing)\ttrue\tx.scpt\tgone-\(UUID()).scpt\n"
+        let workflows = directory.url.appending(path: "Library/Workflows/Applications/Folder Actions", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: workflows.appending(path: "Compress.workflow"), withIntermediateDirectories: true)
+        let output = "true\nHere\t\(existing)\ttrue\tx.scpt\nGone\t/Volumes/not-mounted-\(UUID())\ttrue\t\nRenamed\t\(existing)\ttrue\tx.scpt\tgone-\(UUID()).scpt\nAutomator\t\(existing)\ttrue\tCompress.workflow\n"
         let shell = StubShell(output: ShellOutput(status: 0, stdout: output, stderr: ""))
         let items = try await FolderActionSource(shell: shell, homeDirectory: directory.url).items()
-        #expect(items.count == 3)
+        #expect(items.count == 4)
         #expect(items[0].status == .ok)
+        // Automator のフォルダアクションは ~/Library/Workflows/Applications/Folder Actions にある
+        #expect(items[3].status == .ok)
         #expect(items[1].status == .warning(reason: "Folder not found", note: "it may not be mounted"))
         #expect(items[1].status.fullReason == "Folder not found (it may not be mounted)")
         #expect(items[2].status.reason == "Script not found")

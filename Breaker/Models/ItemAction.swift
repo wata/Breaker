@@ -350,15 +350,17 @@ extension MonitoredItem.FolderAction {
         scriptNames.compactMap { scriptURL(named: $0, home: home, fileManager: fileManager) }
     }
 
-    /// どちらの置き場所にも無いスクリプト。消したり名前を変えたりしても、System Events は名前を返し続ける
+    /// どの置き場所にも無いスクリプト。消したり名前を変えたりしても、System Events は名前を返し続ける
     func missingScriptNames(home: URL, fileManager: FileManager) -> [String] {
         scriptNames.filter { scriptURL(named: $0, home: home, fileManager: fileManager) == nil }
     }
 
+    /// AppleScript は Folder Action Scripts に、Automator で作ったフォルダアクション（.workflow）は Workflows に置かれる
     private func scriptURL(named name: String, home: URL, fileManager: FileManager) -> URL? {
         [
             home.appending(path: "Library/Scripts/Folder Action Scripts", directoryHint: .isDirectory),
             URL(filePath: "/Library/Scripts/Folder Action Scripts", directoryHint: .isDirectory),
+            home.appending(path: "Library/Workflows/Applications/Folder Actions", directoryHint: .isDirectory),
         ]
         .map { $0.appending(path: name) }
         .first { fileManager.fileExists(atPath: $0.path(percentEncoded: false)) }
