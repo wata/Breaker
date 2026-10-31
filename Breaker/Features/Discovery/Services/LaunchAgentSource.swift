@@ -134,6 +134,11 @@ struct LaunchAgentSource: ItemSource {
             schedule: Schedule(plist: plist),
             standardOutPath: standardOutPath,
             standardErrorPath: standardErrorPath,
+            // launchd は文字列以外の値を環境変数にしないので、表示からも外す
+            environmentVariables: (plist["EnvironmentVariables"] as? [String: Any] ?? [:])
+                .compactMapValues { $0 as? String }
+                .map { MonitoredItem.LaunchdJob.EnvironmentVariable(name: $0.key, value: $0.value) }
+                .sorted { $0.name < $1.name },
             requirements: origin.isManageable
                 ? Self.requirements(
                     program: program,
@@ -199,6 +204,7 @@ struct LaunchAgentSource: ItemSource {
             schedule: job.schedule,
             standardOutPath: job.standardOutPath,
             standardErrorPath: job.standardErrorPath,
+            environmentVariables: job.environmentVariables,
             service: service,
             lastRun: lastRun
         )
@@ -237,6 +243,7 @@ extension LaunchAgentSource {
         let schedule: Schedule
         let standardOutPath: String?
         let standardErrorPath: String?
+        let environmentVariables: [MonitoredItem.LaunchdJob.EnvironmentVariable]
         let requirements: [HealthCheck.Requirement]
         let autoDescription: String?
     }

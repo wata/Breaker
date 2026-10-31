@@ -158,6 +158,31 @@ struct LaunchAgentSourceTests {
         #expect(descriptions["com.example.updater"] == .some(nil))
     }
 
+    /// launchd が環境変数にしない文字列以外の値は捨てて名前の順に並べ、EnvironmentVariables の無いジョブは空にする
+    @Test func readsEnvironmentVariables() async throws {
+        let home = try TemporaryDirectory()
+        let agents = home.url.appending(path: "Library/LaunchAgents", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: agents, withIntermediateDirectories: true)
+        try writePlist(
+            [
+                "Label": "com.example.env",
+                "Program": "~/bin/env",
+                "EnvironmentVariables": ["PATH": "/opt/homebrew/bin:/usr/bin:/bin", "LANG": "ja_JP.UTF-8", "RETRIES": 3, "DEBUG": true],
+            ],
+            to: agents.appending(path: "com.example.env.plist")
+        )
+        try writePlist(["Label": "com.example.plain", "Program": "~/bin/plain"], to: agents.appending(path: "com.example.plain.plist"))
+        let shell = StubShell { call in
+            call.arguments.first == "print-disabled"
+                ? ShellOutput(status: 0, stdout: "", stderr: "")
+                : ShellOutput(status: 113, stdout: "", stderr: "Could not find service")
+        }
+        let items = try await source(shell, home: home.url).items()
+        let variables = Dictionary(uniqueKeysWithValues: items.map { ($0.name, job($0)?.environmentVariables) })
+        #expect(variables["com.example.env"] == [.init(name: "LANG", value: "ja_JP.UTF-8"), .init(name: "PATH", value: "/opt/homebrew/bin:/usr/bin:/bin")])
+        #expect(variables["com.example.plain"] == [])
+    }
+
     @Test(arguments: [
         // インタプリタでホームのスクリプトを動かす（instagent）
         (nil, ["/bin/bash", "/Users/me/instagent-launcher.sh"], true),

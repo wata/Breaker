@@ -76,6 +76,7 @@ struct ItemDiscoveryTests {
             schedule: Schedule(),
             standardOutPath: nil,
             standardErrorPath: nil,
+            environmentVariables: [],
             service: nil,
             lastRun: nil
         )

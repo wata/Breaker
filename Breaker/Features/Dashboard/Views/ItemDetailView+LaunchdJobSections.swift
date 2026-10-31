@@ -53,6 +53,40 @@ extension ItemDetailView {
                     LabeledContent("Log", value: String(localized: "None", comment: "Shown when there is nothing to show, e.g. no schedule trigger or no log output"))
                 }
             }
+
+            // 足していないジョブがほとんどなので、「なし」の行で場所を取らず節ごと出さない
+            if !job.environmentVariables.isEmpty {
+                Section("Environment Variables") {
+                    ForEach(job.environmentVariables, id: \.name) { variable in
+                        EnvironmentVariableRow(name: variable.name, value: variable.value)
+                    }
+                }
+            }
+        }
+    }
+
+    /// 名前は利用者の書いたものなので訳さない。PATH のようにコロンで区切ったパスは、区切りごとにホームを `~` で縮める
+    struct EnvironmentVariableRow: View {
+        let name: String
+        let value: String
+
+        var body: some View {
+            let value = value.split(separator: ":", omittingEmptySubsequences: false).map { String($0).abbreviatingHome }.joined(separator: ":")
+            HStack(spacing: Spacing.tight) {
+                Text(verbatim: name)
+                    .font(.Mono.regular)
+                    .fixedSize()
+
+                Spacer(minLength: Spacing.standard)
+
+                Text(verbatim: value)
+                    .font(.Mono.regular)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .textSelection(.enabled)
+                    .help(value)
+            }
         }
     }
 

@@ -47,10 +47,17 @@ struct MonitoredItem: Identifiable, Hashable, Sendable {
         let schedule: Schedule
         let standardOutPath: String?
         let standardErrorPath: String?
+        /// launchd は最小限の PATH で動かすので、plist で PATH などを足しているかを見て失敗の原因を探せるよう持つ。名前の順
+        let environmentVariables: [EnvironmentVariable]
         /// 未ロードのときは nil
         let service: LaunchdServiceInfo?
         /// launchd は最終実行時刻を持たないので、ログファイルの更新時刻と、Breaker が runs の変化で実行を見た時刻の新しいほうで近似する
         let lastRun: Date?
+
+        struct EnvironmentVariable: Hashable, Sendable {
+            let name: String
+            let value: String
+        }
     }
 
     /// `crontab -l` の1行。解釈できない行も、壊れていることに気づけるよう項目にする

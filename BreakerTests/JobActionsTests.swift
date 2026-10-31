@@ -179,6 +179,7 @@ extension MonitoredItem.LaunchdJob {
             schedule: Schedule(),
             standardOutPath: standardOutPath,
             standardErrorPath: standardErrorPath,
+            environmentVariables: [],
             service: service,
             lastRun: nil
         )

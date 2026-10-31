@@ -250,7 +250,11 @@ extension MonitoredItem {
             service: .init(state: "not running", pid: nil, runs: 58, lastExit: .code(1)),
             lastRun: .now.addingTimeInterval(-26 * 3600),
             standardOutPath: out.path(percentEncoded: false),
-            standardErrorPath: err.path(percentEncoded: false)
+            standardErrorPath: err.path(percentEncoded: false),
+            environmentVariables: [
+                .init(name: "GOOGLE_APPLICATION_CREDENTIALS", value: "/Users/me/.config/gcloud/sales-report.json"),
+                .init(name: "PATH", value: "/Users/me/.local/bin:/usr/bin:/bin"),
+            ]
         )
         return MonitoredItem(key: job.label, name: job.label, status: .failed(reason: String(localized: "Exit code \(Int32(1))")), detail: .launchdJob(job))
     }
@@ -296,7 +300,8 @@ extension MonitoredItem.LaunchdJob {
         isHomeJob: Bool = true,
         origin: Origin = .userAgent,
         standardOutPath: String? = nil,
-        standardErrorPath: String? = nil
+        standardErrorPath: String? = nil,
+        environmentVariables: [EnvironmentVariable] = []
     ) -> Self {
         Self(
             label: label,
@@ -311,6 +316,7 @@ extension MonitoredItem.LaunchdJob {
             schedule: schedule,
             standardOutPath: standardOutPath ?? "/Users/me/Library/Logs/\(label).log",
             standardErrorPath: standardErrorPath ?? "/Users/me/Library/Logs/\(label).err.log",
+            environmentVariables: environmentVariables,
             service: service,
             lastRun: lastRun
         )
