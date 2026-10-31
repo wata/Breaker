@@ -1,0 +1,37 @@
+
+	disabled services = {
+		"codes.rambo.AirBuddyHelper" => disabled
+		"com.SMI-Inc.InstantViewHelper" => enabled
+		"com.intii.CopilotForXcode.ExtensionService" => enabled
+		"com.intii.CopilotForXcode.CommunicationBridge" => enabled
+		"com.github.CopilotForXcode.CommunicationBridge" => enabled
+		"codes.rambo.AirBuddy.AirBuddyHelper" => enabled
+		"com.apple.ManagedClientAgent.enrollagent" => disabled
+		"tonyapp.devutils.launcher" => enabled
+		"jp.co.canon.ij.pesp.esplaunchagent" => enabled
+		"com.ollama.ollama" => enabled
+		"com.ameba.SwiftBar-LaunchAtLoginHelper" => enabled
+		"com.surteesstudios.BartenderStartAtLoginHelper" => enabled
+		"studio.fireball.OneSwitch.OneSwitchHelper" => enabled
+		"com.google.keystone.system.agent" => enabled
+		"com.rogueamoeba.arkaudiod" => enabled
+		"com.elgato.StreamDeck.trampoline" => enabled
+		"com.microsoft.update.agent" => enabled
+		"com.apple.Siri.agent" => enabled
+		"com.linguee.DeepLLauncher" => enabled
+		"com.1password.1password-launcher" => enabled
+		"com.facebook.archon.developerID.maintenance" => enabled
+		"com.example.AudioPin-LaunchAtLoginHelper" => enabled
+		"com.apple.FolderActionsDispatcher" => enabled
+		"com.spotify.client.startuphelper" => enabled
+		"com.facebook.archon.loginhelper" => enabled
+		"com.example.backup" => disabled
+		"com.google.keystone.system.xpcservice" => enabled
+		"com.openai.chat-helper" => enabled
+		"com.apple.appleseed.seedusaged.postinstall" => disabled
+		"com.apple.ScriptMenuApp" => disabled
+		"2BUA8C4S2C.com.1password.browser-helper" => enabled
+		"ca.lundie.EjectorLoginItem2" => enabled
+		"io.github.imasanari.cmd-eikana-helper" => enabled
+		"com.elgato.StreamDeck" => disabled
+	}

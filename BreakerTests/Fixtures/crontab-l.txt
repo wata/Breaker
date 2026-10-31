@@ -1,0 +1,16 @@
+# Edit this file to introduce tasks to be run by cron.
+SHELL=/bin/zsh
+PATH = "/usr/local/bin:/usr/bin:/bin"
+MAILTO=''
+
+# m h  dom mon dow   command
+30 7 * * 1-5 ~/bin/sync-notes.sh >> ~/Library/Logs/sync-notes.log 2>&1
+*/15 9-18 * * mon-fri /usr/bin/python3 "$HOME/dev/feeds/fetch feeds.py" > /dev/null
+0 0 1,15 * fri   /bin/sh -c "cd ~/dev/x && ./run.sh >> ~/x.log"
+@daily ~/bin/rotate-logs.sh 2> ~/Library/Logs/rotate.err.log
+@reboot echo started
+0 3 * JAN,jul sun echo "half year"
+0 3 * * * echo "same"
+0 3 * * * echo "same"
+61 * * * * ~/bin/broken.sh
+@sometimes ~/bin/never.sh

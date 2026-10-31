@@ -1,0 +1,96 @@
+gui/501/com.alfredapp.1password = {
+	active count = 0
+	path = /Users/me/Library/LaunchAgents/com.alfredapp.1password.plist
+	type = LaunchAgent
+	state = not running
+
+	program = /usr/bin/osascript
+	arguments = {
+		/usr/bin/osascript
+		-e
+		tell application id "com.runningwithcrayons.Alfred" to run trigger "data_update_detected" in workflow "com.alfredapp.1password"
+	}
+
+	inherited environment = {
+		SSH_AUTH_SOCK => /var/run/com.apple.launchd.AxQUY6s9EQ/Listeners
+	}
+
+	default environment = {
+		PATH => /usr/bin:/bin:/usr/sbin:/sbin
+	}
+
+	environment = {
+		OSLogRateLimit => 64
+		XPC_SERVICE_NAME => com.alfredapp.1password
+	}
+
+	LWCR = {
+		"reqs" => {
+			"signing-identifier" => "com.apple.osascript"
+			"validation-category" => 1
+		}
+		"vers" => 1
+		"comp" => 1
+		"ccat" => 0
+	}
+
+	domain = gui/501 [100021]
+	asid = 100021
+	minimum runtime = 10
+	exit timeout = 5
+	runs = 45
+	last exit code = 1
+
+	event triggers = {
+		com.apple.launchd.WatchPaths => {
+			keepalive = 0
+			service = com.alfredapp.1password
+			stream = com.apple.fsevents.matching
+			monitor = com.apple.UserEventAgent-Aqua
+			descriptor = {
+				"WatchPaths" => [
+					0 = "~/Library/Group Containers/2BUA8C4S2C.com.1password/Library/Application Support/1Password/Data"
+				]
+			}
+		}
+	}
+
+	event channels = {
+		"com.apple.fsevents.matching" = {
+			port = 0xb5623
+			active = 0
+			managed = 1
+			reset = 0
+			hide = 0
+			watching = 1
+		}
+	}
+
+	resource coalition = {
+		ID = 1141
+		type = resource
+		state = active
+		active count = 1
+		name = com.alfredapp.1password
+	}
+
+	jetsam coalition = {
+		ID = 1142
+		type = jetsam
+		state = active
+		active count = 1
+		name = com.alfredapp.1password
+	}
+
+	spawn type = daemon (3)
+	jetsam priority = 40
+	jetsam memory limit (active) = (unlimited)
+	jetsam memory limit (inactive) = (unlimited)
+	jetsamproperties category = daemon
+	jetsam thread limit = 32
+	cpumon = default
+	job state = exited
+	sanitizer flags = 0x0
+
+	properties = inferred program | managed LWCR | has LWCR
+}

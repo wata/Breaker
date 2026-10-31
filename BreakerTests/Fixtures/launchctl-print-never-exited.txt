@@ -1,0 +1,71 @@
+gui/501/com.example.monthly-invoice = {
+	active count = 0
+	path = /Users/me/Library/LaunchAgents/com.example.monthly-invoice.plist
+	type = LaunchAgent
+	state = not running
+
+	program = /bin/bash
+	arguments = {
+		/bin/bash
+		/Users/me/dev/invoices/scripts/monthly-invoice.sh
+	}
+
+	stdout path = /tmp/com.example.monthly-invoice.stdout.log
+	stderr path = /tmp/com.example.monthly-invoice.stderr.log
+	inherited environment = {
+		SSH_AUTH_SOCK => /var/run/com.apple.launchd.AxQUY6s9EQ/Listeners
+	}
+
+	default environment = {
+		PATH => /usr/bin:/bin:/usr/sbin:/sbin
+	}
+
+	environment = {
+		OSLogRateLimit => 64
+		XPC_SERVICE_NAME => com.example.monthly-invoice
+	}
+
+	domain = gui/501 [100021]
+	asid = 100021
+	minimum runtime = 10
+	exit timeout = 5
+	runs = 0
+	last exit code = (never exited)
+
+	event triggers = {
+		com.example.monthly-invoice.268435479 => {
+			keepalive = 0
+			service = com.example.monthly-invoice
+			stream = com.apple.launchd.calendarinterval
+			monitor = com.apple.UserEventAgent-Aqua
+			descriptor = {
+				"Minute" => 0
+				"Hour" => 11
+				"Day" => 1
+			}
+		}
+	}
+
+	event channels = {
+		"com.apple.launchd.calendarinterval" = {
+			port = 0x0
+			active = 0
+			managed = 1
+			reset = 0
+			hide = 0
+			watching = 1
+		}
+	}
+
+	spawn type = daemon (3)
+	jetsam priority = 40
+	jetsam memory limit (active) = (unlimited)
+	jetsam memory limit (inactive) = (unlimited)
+	jetsamproperties category = daemon
+	jetsam thread limit = 32
+	cpumon = default
+	job state = uninitialized
+	sanitizer flags = 0x0
+
+	properties = inferred program | needs LWCR update | managed LWCR
+}

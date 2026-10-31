@@ -1,0 +1,4 @@
+true
+Convert Videos	/Users/me/Convert Videos	true	Copy and Compress Videos.workflow
+share1	/Volumes/share1	true
+

@@ -1,0 +1,84 @@
+gui/501/com.example.cert-check = {
+	active count = 0
+	path = /Users/me/Library/LaunchAgents/com.example.cert-check.plist
+	type = LaunchAgent
+	state = not running
+
+	program = /Users/me/Library/Scripts/cert-check.sh
+	arguments = {
+		/Users/me/Library/Scripts/cert-check.sh
+	}
+
+	inherited environment = {
+		SSH_AUTH_SOCK => /var/run/com.apple.launchd.AxQUY6s9EQ/Listeners
+	}
+
+	default environment = {
+		PATH => /usr/bin:/bin:/usr/sbin:/sbin
+	}
+
+	environment = {
+		OSLogRateLimit => 64
+		XPC_SERVICE_NAME => com.example.cert-check
+	}
+
+	domain = gui/501 [100021]
+	asid = 100021
+	minimum runtime = 10
+	exit timeout = 5
+	runs = 1
+	last exit code = 0
+
+	event triggers = {
+		com.apple.launchd.WatchPaths => {
+			keepalive = 0
+			service = com.example.cert-check
+			stream = com.apple.fsevents.matching
+			monitor = com.apple.UserEventAgent-Aqua
+			descriptor = {
+				"WatchPaths" => [
+					0 = "/etc/ssl/cert.pem"
+				]
+			}
+		}
+	}
+
+	event channels = {
+		"com.apple.fsevents.matching" = {
+			port = 0x44f0f
+			active = 0
+			managed = 1
+			reset = 0
+			hide = 0
+			watching = 1
+		}
+	}
+
+	resource coalition = {
+		ID = 66641
+		type = resource
+		state = active
+		active count = 1
+		name = com.example.cert-check
+	}
+
+	jetsam coalition = {
+		ID = 66642
+		type = jetsam
+		state = active
+		active count = 1
+		name = com.example.cert-check
+	}
+
+	spawn type = daemon (3)
+	jetsam priority = 40
+	jetsam memory limit (active) = (unlimited)
+	jetsam memory limit (inactive) = (unlimited)
+	jetsamproperties category = daemon
+	jetsam thread limit = 32
+	cpumon = default
+	job state = exited
+	sanitizer flags = 0x0
+
+	properties = runatload | inferred program
+}
