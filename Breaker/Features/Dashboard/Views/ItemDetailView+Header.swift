@@ -48,8 +48,12 @@ extension ItemDetailView {
                             .textSelection(.enabled)
                     }
 
-                    // 補足があればそれが原因を言っている（ログのエラーなら補足がその行）ので、同じことを二度出さない
+                    /**
+                     補足があればそれが原因を言っている（ログのエラーなら補足がその行）ので、同じことを二度出さない。
+                     正常なジョブの標準エラーには直す前の失敗が残っていることがあるので、それを原因のように見せないよう失敗のときだけ出す
+                     */
                     if
+                        item.status.isFailed,
                         item.status.note == nil,
                         case .text(let text) = errorLogViewModel.content,
                         let cause = LogErrorLine.last(in: text)
