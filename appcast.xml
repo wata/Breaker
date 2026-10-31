@@ -3,6 +3,20 @@
     <channel>
         <title>Breaker</title>
         <item>
+            <title>1.1.0</title>
+            <pubDate>Sun, 01 Nov 2026 03:46:30 +0900</pubDate>
+            <sparkle:version>2</sparkle:version>
+            <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description sparkle:format="markdown"><![CDATA[- Schedule editor handles "every hour" times and hour ranges such as 7:00–23:00. They used to be removed when saving.
+- Logs follow new output while you're looking at them, and color codes no longer show up as garbage.
+- Shows a launchd job's environment variables, such as PATH.
+- An old error left in a log no longer marks a job as failed once it has run again.
+- Finds Folder Actions that use Automator workflows.
+]]></description>
+            <enclosure url="https://github.com/wata/Breaker/releases/download/1.1.0/Breaker-1.1.0.zip" length="4565148" type="application/octet-stream" sparkle:edSignature="PiFkdbW8C5FvHf8LPgIRSI7fy7qHK9Ry8BidIDDQNFGucJnTLFDGiux1J+09vZRoPdyHN12fCacP7nfqcUd8Ag=="/>
+        </item>
+        <item>
             <title>1.0.0</title>
             <pubDate>Sun, 01 Nov 2026 02:59:16 +0900</pubDate>
             <sparkle:version>1</sparkle:version>
