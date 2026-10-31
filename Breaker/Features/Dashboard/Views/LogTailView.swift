@@ -1,7 +1,7 @@
 import SwiftUI
 
 /**
- ジョブのログの末尾。Form の Section として置く。`refreshDate` が変わるたびに読み直す。
+ ジョブのログの末尾。Form の Section として置く。`refreshDate` が変わるたびと、表示している間は `ViewModel.followInterval` ごとに読み直す。
  標準出力と標準エラーが別のファイルなら見出しの切り替えで選ぶ。パスは見出しに並べず、「Finder で表示」のツールチップで見せる。
  どの出力もまだ無いときは置かない（ジョブの節の「ログ」の行で伝える）
  */
@@ -31,7 +31,9 @@ struct LogTailView: View {
     }
 
     var body: some View {
-        let content = selection.hasOutput() ? viewModel.content : .empty
+        // 空のファイルに出力が届いたときも描き直されるよう、読み込んだ内容は出力の有無によらず必ず参照する
+        let loaded = viewModel.content
+        let content = selection.hasOutput() ? loaded : .empty
         Section {
             Group {
                 switch content {
@@ -54,6 +56,7 @@ struct LogTailView: View {
             }
             .task(id: LoadKey(path: selection.path, refreshDate: refreshDate)) {
                 await viewModel.load(path: selection.path, lineCount: Self.lineCount)
+                await viewModel.follow(path: selection.path, lineCount: Self.lineCount)
             }
         } header: {
             HStack(spacing: Spacing.tight) {
@@ -96,10 +99,16 @@ extension LogTailView {
      短いログで上が空いた板にならないよう、高さは中身に合わせて縮め、`Layout.logMaxHeight` を超えたときだけスクロールさせる。
      失敗の原因を探しやすいよう、詳細の概要の原因と同じ判定でエラーらしい行に薄い失敗の色を敷く。
      ログの塊が概要の状態より目立たないよう本文は薄くし、エラーらしい行だけ本文の色に戻して拾いやすくする。
-     文字まで赤くすると概要の原因と競うので赤くはしない
+     文字まで赤くすると概要の原因と競うので赤くはしない。
+     読み直して行が増えたとき、下端にいれば下端に付いていき、上に戻って読んでいるときは位置を動かさない
      */
     struct LogText: View {
+        /// 下端とみなす余裕。端数のずれで下端にいないと判定されないようにする
+        private static let bottomTolerance = Spacing.micro
+
         let text: String
+
+        @State private var position = ScrollPosition()
 
         var body: some View {
             let lines = Self.lines(of: text)
@@ -116,7 +125,20 @@ extension LogTailView {
                         ErrorBands(lines: lines)
                     }
             }
-            .defaultScrollAnchor(.bottom)
+            .scrollPosition($position)
+            // 大きさが変わったときの位置合わせは下の判定で行う。下端を基準に残すと、上で読んでいる行まで押し流されるので最初の位置だけに使う
+            .defaultScrollAnchor(.bottom, for: .initialOffset)
+            .onScrollGeometryChange(for: Extent.self) { geometry in
+                Extent(contentHeight: geometry.contentSize.height, visibleMaxY: geometry.visibleRect.maxY)
+            } action: { old, new in
+                guard
+                    new.contentHeight != old.contentHeight,
+                    old.visibleMaxY >= old.contentHeight - Self.bottomTolerance
+                else {
+                    return
+                }
+                position.scrollTo(edge: .bottom)
+            }
             .scrollBounceBehavior(.basedOnSize)
             // 高さを決めずに測らせて中身の高さを受け取り、上限で切る
             .frame(maxHeight: Layout.logMaxHeight)
@@ -142,6 +164,12 @@ extension LogTailView {
                 result.append(part)
             }
         }
+    }
+
+    /// 下端に付いていくかを決めるための、中身の高さと見えている範囲の下端
+    struct Extent: Equatable {
+        let contentHeight: CGFloat
+        let visibleMaxY: CGFloat
     }
 
     struct Line: Identifiable {

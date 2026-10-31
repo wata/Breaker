@@ -40,6 +40,23 @@ enum LogReader {
         return logs
     }
 
+    /**
+     読み直すかどうかを決める目印。追記は更新時刻で気づき、更新時刻の分解能より短い間の書き込みや切り詰めは大きさで気づく。
+     本文は読まずに属性だけを見るので、数秒おきに呼んでも安い
+     */
+    struct Stamp: Equatable, Sendable {
+        let modificationDate: Date?
+        let size: Int?
+    }
+
+    /// ファイルがなければ nil
+    static func stamp(of path: String) -> Stamp? {
+        guard let values = try? URL(filePath: path).resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey]) else {
+            return nil
+        }
+        return Stamp(modificationDate: values.contentModificationDate, size: values.fileSize)
+    }
+
     /// ログのうちいちばん新しい更新時刻。どれも無ければ nil
     static func lastModificationDate(of paths: [String]) -> Date? {
         paths
