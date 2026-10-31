@@ -41,6 +41,12 @@ struct LogErrorLineTests {
         #expect(LogErrorLine.last(in: text) == "KeyboardInterrupt")
     }
 
+    /// 色付きの Traceback も、LogReader で色を落とせば見出しと例外の行が分かる
+    @Test func lastPicksExceptionAfterColoredTraceback() {
+        let text = "\u{1B}[31mTraceback (most recent call last):\u{1B}[0m\n  File \"a.py\", line 1, in <module>\n\u{1B}[1;31mKeyboardInterrupt\u{1B}[0m"
+        #expect(LogErrorLine.last(in: LogReader.plainText(of: text)) == "KeyboardInterrupt")
+    }
+
     @Test func lastIsNilWithoutErrors() {
         #expect(LogErrorLine.last(in: "step 1 done\nstep 2 done") == nil)
         #expect(LogErrorLine.last(in: "") == nil)

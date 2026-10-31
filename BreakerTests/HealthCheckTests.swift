@@ -233,6 +233,16 @@ struct HealthCheckTests {
         #expect(error.hasSuffix("…"))
     }
 
+    /// サイドバーと通知に出す行に、ログの色の ESC 列が残らない
+    @Test func logErrorFromColoredLogHasNoEscapes() async throws {
+        let directory = try TemporaryDirectory()
+        let url = directory.url.appending(path: "job.err")
+        try "step 1 done\n\u{1B}[1;31mError:\u{1B}[0m token expired\n".write(to: url, atomically: true, encoding: .utf8)
+
+        let logs = await LogReader.tails(of: [url.path(percentEncoded: false)], lineCount: HealthCheck.logLineCount)
+        #expect(HealthCheck.logError(in: logs) == "Error: token expired")
+    }
+
     /// 見張りの開始は、指定がなければどの予定よりも前（ずっと見張っていた）にする
     private func missedRun(_ schedule: Schedule, lastRun: Date?, watchStart: Date? = nil, now: Date, bootTime: Date? = nil) -> Date? {
         HealthCheck.missedRun(
