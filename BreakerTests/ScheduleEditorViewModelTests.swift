@@ -71,10 +71,87 @@ struct ScheduleEditorViewModelTests {
     }
 
     @Test func unsupportedEntriesAreReportedAsLost() {
-        let viewModel = ViewModel(schedule: Schedule(calendarEntries: [Entry(minute: 0, hour: 8), Entry(minute: 15, month: 2), Entry(minute: 30)]))
+        let viewModel = ViewModel(schedule: Schedule(calendarEntries: [Entry(minute: 0, hour: 8), Entry(minute: 15, month: 2), Entry(hour: 9)]))
         #expect(viewModel.rows.count == 1)
-        #expect(viewModel.lossNotes.count == 1)
+        #expect(viewModel.lossNotes == ["This editor can't show months or “every minute” times, so saving removes them."])
         #expect(viewModel.schedule?.calendarEntries == [Entry(minute: 0, hour: 8)])
+    }
+
+    /// Hour のないエントリは毎時の行になり、保存しても Hour を書かない
+    @Test(arguments: [
+        [Entry(minute: 30)],
+        (1...5).map { Entry(minute: 15, weekday: $0) },
+        [Entry(minute: 0, day: 1)],
+    ])
+    func everyHourRoundTrips(entries: [Entry]) {
+        let viewModel = ViewModel(schedule: Schedule(calendarEntries: entries))
+        #expect(viewModel.rows.map(\.hourMode) == [.everyHour])
+        #expect(viewModel.lossNotes.isEmpty)
+        #expect(viewModel.schedule?.calendarEntries == entries)
+    }
+
+    @Test func contiguousHoursCollapseToRange() {
+        let entries = (7...23).map { Entry(minute: 0, hour: $0) }
+        let viewModel = ViewModel(schedule: Schedule(calendarEntries: entries))
+        #expect(viewModel.rows.count == 1)
+        #expect(viewModel.rows[0].hourMode == .range)
+        #expect(viewModel.rows[0].hour == 7)
+        #expect(viewModel.rows[0].endHour == 23)
+        #expect(viewModel.schedule?.calendarEntries == entries)
+    }
+
+    /// 曜日ごとのエントリも、曜日の組が同じなら時の範囲にまとまり、保存で時ごと・曜日ごとに展開される
+    @Test func weeklyContiguousHoursCollapseToRange() {
+        let entries = (9...11).flatMap { hour in (1...5).map { Entry(minute: 30, hour: hour, weekday: $0) } }
+        let viewModel = ViewModel(schedule: Schedule(calendarEntries: entries))
+        #expect(viewModel.rows.count == 1)
+        #expect(viewModel.rows[0].repetition == .weekly)
+        #expect(viewModel.rows[0].hourMode == .range)
+        #expect(viewModel.schedule?.calendarEntries == entries)
+    }
+
+    /// 時が飛んでいるもの、分や曜日が違うものはまとめない
+    @Test(arguments: [
+        [Entry(minute: 0, hour: 7), Entry(minute: 0, hour: 9)],
+        [Entry(minute: 0, hour: 7), Entry(minute: 30, hour: 8)],
+        [Entry(minute: 0, hour: 7, weekday: 1), Entry(minute: 0, hour: 8, weekday: 2)],
+        [Entry(minute: 0, hour: 7, day: 1), Entry(minute: 0, hour: 8, day: 2)],
+        [Entry(minute: 0, hour: 8), Entry(minute: 0, hour: 7)],
+    ])
+    func nonContiguousHoursStaySeparate(entries: [Entry]) {
+        let viewModel = ViewModel(schedule: Schedule(calendarEntries: entries))
+        #expect(viewModel.rows.map(\.hourMode) == [.specific, .specific])
+        #expect(viewModel.schedule?.calendarEntries == entries)
+    }
+
+    @Test func rangeExpandsToOneEntryPerHourOnSave() {
+        let viewModel = ViewModel(schedule: Schedule())
+        viewModel.mode = .calendar
+        viewModel.rows[0].repetition = .monthly
+        viewModel.rows[0].day = 15
+        viewModel.rows[0].hourMode = .range
+        viewModel.rows[0].hour = 22
+        viewModel.rows[0].endHour = 23
+        viewModel.rows[0].minute = 5
+        #expect(viewModel.schedule?.calendarEntries == [Entry(minute: 5, hour: 22, day: 15), Entry(minute: 5, hour: 23, day: 15)])
+    }
+
+    @Test(arguments: [(9, 9), (10, 9), (9, 24)])
+    func rangeMustEndAfterStartWithinDay(start: Int, end: Int) {
+        let viewModel = ViewModel(schedule: Schedule(calendarEntries: [Entry(minute: 0, hour: 8)]))
+        viewModel.rows[0].hourMode = .range
+        viewModel.rows[0].hour = start
+        viewModel.rows[0].endHour = end
+        #expect(viewModel.rows[0].problem != nil)
+        #expect(viewModel.schedule == nil)
+    }
+
+    /// 毎時は時の欄を使わないので、範囲外の値が残っていても保存できる
+    @Test func everyHourIgnoresHourField() {
+        let viewModel = ViewModel(schedule: Schedule(calendarEntries: [Entry(minute: 0, hour: 8)]))
+        viewModel.rows[0].hourMode = .everyHour
+        viewModel.rows[0].hour = 99
+        #expect(viewModel.schedule?.calendarEntries == [Entry(minute: 0)])
     }
 
     @Test func bothCalendarAndIntervalWarnsAndKeepsCalendar() {

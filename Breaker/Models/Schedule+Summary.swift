@@ -94,7 +94,8 @@ extension Schedule {
 
     /**
      平日 9:00 は launchd では曜日ごとの5エントリになるので、曜日以外が同じエントリを1行にまとめる。
-     曜日の指定がないエントリが1つでも混じれば、その時刻は毎日動く
+     曜日の指定がないエントリが1つでも混じれば、その時刻は毎日動く。
+     スケジュール編集で時の範囲にした 7:00〜23:00 の毎時は時ごとのエントリになるので、時だけが1ずつ続く隣り合った行も1行にまとめる
      */
     private static func calendarLines(_ entries: [CalendarEntry], locale: Locale) -> [String] {
         let keys = entries.reduce(into: [CalendarEntry]()) { keys, entry in
@@ -102,15 +103,30 @@ extension Schedule {
             guard !keys.contains(key) else { return }
             keys.append(key)
         }
-        return keys.map { key in
+        let groups = keys.reduce(into: [(entry: CalendarEntry, weekdays: Set<Int>?, endHour: Int?)]()) { groups, key in
             let weekdays = entries.filter { $0.ignoringWeekday == key }.map(\.weekday)
             let weekdaySet = weekdays.contains(nil) ? nil : Set(weekdays.compactMap { $0.map { $0 % 7 } })
-            return line(key, weekdays: weekdaySet, locale: locale)
+            guard
+                let last = groups.last,
+                let hour = key.hour,
+                key.minute != nil,
+                (last.endHour ?? last.entry.hour).map({ $0 + 1 }) == hour,
+                last.entry.ignoringHour == key.ignoringHour,
+                last.weekdays == weekdaySet
+            else {
+                groups.append((key, weekdaySet, nil))
+                return
+            }
+            groups[groups.count - 1].endHour = hour
         }
+        return groups.map { line($0.entry, weekdays: $0.weekdays, endHour: $0.endHour, locale: locale) }
     }
 
-    /// 日の部分と時刻の部分をつなぐ。英語は時刻なら「at」、「毎分」のような句ならカンマでつなぐので、語順ごとに訳を持つ
-    private static func line(_ entry: CalendarEntry, weekdays: Set<Int>?, locale: Locale) -> String {
+    /**
+     日の部分と時刻の部分をつなぐ。英語は時刻なら「at」、「毎分」のような句ならカンマでつなぐので、語順ごとに訳を持つ。
+     `endHour` があれば `entry.hour` からその時までの毎時
+     */
+    private static func line(_ entry: CalendarEntry, weekdays: Set<Int>?, endHour: Int?, locale: Locale) -> String {
         let weekdays = weekdays.flatMap { weekdayText($0, locale: locale) }
         let days = dayText(day: entry.day, weekdays: weekdays, locale: locale)
         let date: String? = switch (entry.month, entry.day, weekdays) {
@@ -133,7 +149,11 @@ extension Schedule {
         switch (entry.hour, entry.minute) {
         case (let hour?, let minute?):
             let time = clockText(hour: hour, minute: minute, locale: locale)
-            return String(localized: "\(date ?? everyDay(locale: locale)) at \(time)", language: locale)
+            guard let endHour else {
+                return String(localized: "\(date ?? everyDay(locale: locale)) at \(time)", language: locale)
+            }
+            let endTime = clockText(hour: endHour, minute: minute, locale: locale)
+            return String(localized: "\(date ?? everyDay(locale: locale)), every hour from \(time) to \(endTime)", language: locale)
 
         case (let hour?, nil):
             return String(localized: "\(date ?? everyDay(locale: locale)), every minute during hour \(hour)", language: locale)
@@ -230,6 +250,12 @@ extension Schedule.CalendarEntry {
     fileprivate var ignoringWeekday: Self {
         var entry = self
         entry.weekday = nil
+        return entry
+    }
+
+    fileprivate var ignoringHour: Self {
+        var entry = self
+        entry.hour = nil
         return entry
     }
 }

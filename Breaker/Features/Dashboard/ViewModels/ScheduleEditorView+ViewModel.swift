@@ -71,6 +71,25 @@ extension ScheduleEditorView {
             }
         }
 
+        enum HourMode: CaseIterable {
+            case specific
+            case everyHour
+            case range
+
+            var title: String {
+                switch self {
+                case .specific:
+                    String(localized: "Specific Hour", comment: "Hour option in the schedule editor that runs at one hour")
+
+                case .everyHour:
+                    String(localized: "Every Hour", comment: "Hour option in the schedule editor that runs every hour at the chosen minute")
+
+                case .range:
+                    String(localized: "Hour Range", comment: "Hour option in the schedule editor that runs every hour from a start hour to an end hour, e.g. 7–23")
+                }
+            }
+        }
+
         /**
          画面の1行。平日 9:00 は launchd では曜日ごとの5エントリだが、1行で月〜金を選んだ形で見せ、保存時に展開する。
          繰り返しを切り替えても曜日や日付の選択は残し、戻したときに失われないようにする
@@ -81,25 +100,50 @@ extension ScheduleEditorView {
             /// launchd の表記（0 が日曜）。7 は読み込み時に 0 にそろえる
             var weekdays = Set(1...5)
             var day = 1
+            var hourMode = HourMode.specific
+            /// 範囲のときは始まりの時
             var hour = 9
+            /// 範囲の終わりの時（この時も含む）
+            var endHour = 17
             var minute = 0
 
+            /**
+             書き出す Hour の値。毎時は Hour を書かないので nil、範囲は launchd に範囲の書き方がないので時ごとに並べる。
+             始まりが終わりより後でも落ちないよう、範囲は stride で作る（その入力は `problem` で止める）
+             */
+            var hours: [Int?] {
+                switch hourMode {
+                case .specific:
+                    [hour]
+
+                case .everyHour:
+                    [nil]
+
+                case .range:
+                    stride(from: hour, through: endHour, by: 1).map { $0 }
+                }
+            }
+
             var entries: [Schedule.CalendarEntry] {
-                switch repetition {
-                case .daily:
-                    [Schedule.CalendarEntry(minute: minute, hour: hour)]
+                hours.flatMap { hour in
+                    switch repetition {
+                    case .daily:
+                        [Schedule.CalendarEntry(minute: minute, hour: hour)]
 
-                case .weekly:
-                    weekdays.sorted().map { Schedule.CalendarEntry(minute: minute, hour: hour, weekday: $0) }
+                    case .weekly:
+                        weekdays.sorted().map { Schedule.CalendarEntry(minute: minute, hour: hour, weekday: $0) }
 
-                case .monthly:
-                    [Schedule.CalendarEntry(minute: minute, hour: hour, day: day)]
+                    case .monthly:
+                        [Schedule.CalendarEntry(minute: minute, hour: hour, day: day)]
+                    }
                 }
             }
 
             var problem: String? {
                 [
-                    (0...23).contains(hour) ? nil : String(localized: "Enter an hour from 0 to 23."),
+                    hourMode == .everyHour || (0...23).contains(hour) ? nil : String(localized: "Enter an hour from 0 to 23."),
+                    hourMode != .range || (0...23).contains(endHour) ? nil : String(localized: "Enter an hour from 0 to 23."),
+                    hourMode != .range || hour < endHour ? nil : String(localized: "Enter an end hour later than the start hour."),
                     (0...59).contains(minute) ? nil : String(localized: "Enter a minute from 0 to 59."),
                     repetition != .monthly || (1...31).contains(day) ? nil : String(localized: "Enter a day from 1 to 31."),
                     repetition != .weekly || !weekdays.isEmpty ? nil : String(localized: "Choose at least one day of the week."),
@@ -145,7 +189,7 @@ extension ScheduleEditorView {
 
             lossNotes = [
                 isLossy
-                    ? String(localized: "This editor can't show months or “every hour” and “every minute” times, so saving removes them.")
+                    ? String(localized: "This editor can't show months or “every minute” times, so saving removes them.")
                     : nil,
                 !schedule.calendarEntries.isEmpty && schedule.interval != nil
                     ? String(localized: "This job has both specific times and an interval. Saving keeps only the one you choose.")
@@ -201,8 +245,9 @@ extension ScheduleEditorView {
         }
 
         /**
-         曜日以外が同じエントリを1行にまとめる（`Schedule.summaryLines` と同じ考え方）。
-         月・毎時・毎分の指定と、Day と Weekday の併用は1行で表せないので読み飛ばし、`isLossy` で知らせる
+         曜日以外が同じエントリを1行にまとめ、時だけが続くものは範囲の1行にする（`Schedule.summaryLines` と同じ考え方）。
+         Hour のないエントリは毎時の行にする。月・毎分（Minute なし）の指定と、Day と Weekday の併用は1行で表せないので読み飛ばし、
+         `isLossy` で知らせる
          */
         static func rows(from entries: [Schedule.CalendarEntry]) -> (rows: [Row], isLossy: Bool) {
             var rows = [Row]()
@@ -210,18 +255,21 @@ extension ScheduleEditorView {
             for entry in entries {
                 guard
                     entry.month == nil,
-                    let hour = entry.hour,
                     let minute = entry.minute,
                     entry.day == nil || entry.weekday == nil
                 else {
                     isLossy = true
                     continue
                 }
+                var row = Row(hourMode: entry.hour == nil ? .everyHour : .specific, minute: minute)
+                row.hour = entry.hour ?? row.hour
                 if let day = entry.day {
-                    rows.append(Row(repetition: .monthly, day: day, hour: hour, minute: minute))
+                    row.repetition = .monthly
+                    row.day = day
+                    rows.append(row)
                     continue
                 }
-                let index = rows.firstIndex { $0.repetition != .monthly && $0.hour == hour && $0.minute == minute }
+                let index = rows.firstIndex { $0.repetition != .monthly && $0.hours == row.hours && $0.minute == minute }
                 switch (index, entry.weekday) {
                 case (let index?, let weekday?):
                     if rows[index].repetition == .weekly {
@@ -233,16 +281,42 @@ extension ScheduleEditorView {
                     rows[index].repetition = .daily
 
                 case (nil, let weekday?):
-                    rows.append(Row(repetition: .weekly, weekdays: [weekday % 7], hour: hour, minute: minute))
+                    row.repetition = .weekly
+                    row.weekdays = [weekday % 7]
+                    rows.append(row)
 
                 case (nil, nil):
-                    rows.append(Row(repetition: .daily, hour: hour, minute: minute))
+                    rows.append(row)
                 }
             }
             for index in rows.indices where rows[index].repetition == .weekly && rows[index].weekdays.count == 7 {
                 rows[index].repetition = .daily
             }
-            return (rows, isLossy)
+            return (mergingHourRanges(rows), isLossy)
+        }
+
+        /**
+         7:00〜23:00 の毎時のような時ごとのエントリを17行で見せないよう、時だけが1ずつ続く隣り合った行を範囲の1行にまとめる。
+         離れた行までまとめると行の順番が変わるので、隣り合うものだけを見る
+         */
+        private static func mergingHourRanges(_ rows: [Row]) -> [Row] {
+            rows.reduce(into: [Row]()) { merged, row in
+                guard
+                    row.hourMode == .specific,
+                    let last = merged.last,
+                    last.hourMode != .everyHour,
+                    (last.hourMode == .range ? last.endHour : last.hour) + 1 == row.hour,
+                    last.minute == row.minute,
+                    last.repetition == row.repetition,
+                    row.repetition != .weekly || last.weekdays == row.weekdays,
+                    row.repetition != .monthly || last.day == row.day
+                else {
+                    merged.append(row)
+                    return
+                }
+                merged[merged.count - 1].hourMode = .range
+                merged[merged.count - 1].endHour = row.hour
+            }
         }
     }
 }

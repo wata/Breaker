@@ -169,6 +169,25 @@ struct ScheduleEditorView: View {
     ) { _ in }
 }
 
+#Preview("Hourly 7:00–23:00 and Monthly Range") {
+    ScheduleEditorView(
+        job: .sample(
+            "com.example.inbox-sync",
+            schedule: Schedule(calendarEntries: (7...23).map { .init(minute: 0, hour: $0) } + (9...17).map { .init(minute: 30, hour: $0, day: 15) })
+        ),
+        hasComments: false,
+        isSaving: false
+    ) { _ in }
+}
+
+#Preview("Every Hour at :15") {
+    ScheduleEditorView(
+        job: .sample("com.example.feed-fetch", schedule: Schedule(calendarEntries: [.init(minute: 15)])),
+        hasComments: false,
+        isSaving: false
+    ) { _ in }
+}
+
 #Preview("Every 30 Minutes with Comments") {
     ScheduleEditorView(
         job: .sample("com.example.calendar-sync", schedule: Schedule(interval: 1800, runAtLoad: true), lastRun: .now.addingTimeInterval(-600)),

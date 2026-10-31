@@ -40,6 +40,18 @@ struct ScheduleSummaryTests {
         #expect(schedule.summaryLines(locale: Self.japanese) == japanese)
     }
 
+    /// スケジュール編集で時の範囲にしたものは時ごとのエントリになるので、1行にまとめる。訳はまだないので英語だけ確かめる
+    private static let hourRangeCases: [([Entry], [String])] = [
+        ((7...23).map { Entry(minute: 0, hour: $0) }, ["Every day, every hour from 7:00\u{202F}AM to 11:00\u{202F}PM"]),
+        ((9...17).flatMap { hour in (1...5).map { Entry(minute: 30, hour: hour, weekday: $0) } }, ["Weekdays, every hour from 9:30\u{202F}AM to 5:30\u{202F}PM"]),
+        ([Entry(minute: 0, hour: 7), Entry(minute: 0, hour: 9)], ["Every day at 7:00\u{202F}AM", "Every day at 9:00\u{202F}AM"]),
+    ]
+
+    @Test(arguments: hourRangeCases)
+    func contiguousHoursReadAsRange(entries: [Entry], english: [String]) {
+        #expect(Schedule(calendarEntries: entries).summaryLines(locale: Self.english) == english)
+    }
+
     @Test func combinesAllTriggersInOrder() {
         let schedule = Schedule(
             calendarEntries: [Entry(minute: 0, hour: 9)],

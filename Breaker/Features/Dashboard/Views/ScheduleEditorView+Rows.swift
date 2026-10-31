@@ -34,7 +34,23 @@ extension ScheduleEditorView {
 
                     Spacer()
 
-                    NumberField(title: "Hour", value: $row.hour)
+                    Picker("Hour", selection: $row.hourMode) {
+                        ForEach(ViewModel.HourMode.allCases, id: \.self) { hourMode in
+                            Text(hourMode.title)
+                        }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+
+                    if row.hourMode != .everyHour {
+                        NumberField(title: "Hour", value: $row.hour)
+                    }
+
+                    if row.hourMode == .range {
+                        Text(verbatim: "–")
+
+                        NumberField(title: "End Hour", value: $row.endHour)
+                    }
 
                     Text(verbatim: ":")
 
