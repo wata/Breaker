@@ -2,5 +2,17 @@
 <rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
     <channel>
         <title>Breaker</title>
+        <item>
+            <title>1.0.0</title>
+            <pubDate>Sun, 01 Nov 2026 02:59:16 +0900</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description sparkle:format="markdown"><![CDATA[- First release.
+- Lists your launchd jobs, cron lines, Folder Actions, SwiftBar plugins, and the apps you choose, and notifies you when one breaks.
+- Signed with a Developer ID and notarized by Apple.
+]]></description>
+            <enclosure url="https://github.com/wata/Breaker/releases/download/1.0.0/Breaker-1.0.0.zip" length="4543842" type="application/octet-stream" sparkle:edSignature="KtnWI4tMp+VYQ0vLXMWWRHIA7TR5JbL140rMcdd7AGjyG+t5WKujGxTcois7RBYQiulzCVkEmumdvbqm7f6MCg=="/>
+        </item>
     </channel>
 </rss>
