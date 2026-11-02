@@ -21,7 +21,7 @@ Scheduled scripts fail silently. Breaker was born after one of mine kept failing
 
 ## Requirements
 
-macOS 27 or later.
+macOS 26 or later.
 
 ## Usage
 

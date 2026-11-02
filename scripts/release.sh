@@ -148,7 +148,7 @@ sed -i '' \
 step "Release アーカイブ"
 # 前回の archive や書き出しが混ざらないよう消しておく
 rm -rf "$ARCHIVE" "$EXPORT_DIR"
-# 配布用なので、実行中の Mac に合わせず汎用の macOS 向けにビルドする（deployment target が macOS 27 で Intel 機は対象外のため arm64 だけになる）
+# 配布用なので、実行中の Mac に合わせず汎用の macOS 向けにビルドする（deployment target が macOS 26 なので、Xcode 標準の ARCHS で arm64 と x86_64 のユニバーサルになる）
 xcodebuild archive \
     -project Breaker.xcodeproj \
     -scheme Breaker \
