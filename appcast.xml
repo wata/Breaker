@@ -3,6 +3,16 @@
     <channel>
         <title>Breaker</title>
         <item>
+            <title>1.1.2</title>
+            <pubDate>Tue, 03 Nov 2026 01:10:02 +0900</pubDate>
+            <sparkle:version>4</sparkle:version>
+            <sparkle:shortVersionString>1.1.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <description sparkle:format="markdown"><![CDATA[- Lowered the minimum system requirement to macOS 26 (was macOS 27)
+]]></description>
+            <enclosure url="https://github.com/wata/Breaker/releases/download/1.1.2/Breaker-1.1.2.zip" length="5138340" type="application/octet-stream" sparkle:edSignature="EP1k0XTtWuX4KGjbiJjEWv8iCnW0Ay5e8UYH9VLH0MxtJV//YcmEo2Fe6au9PPRmsPwzVRlTxT6itlWpa79rDg=="/>
+        </item>
+        <item>
             <title>1.1.1</title>
             <pubDate>Sun, 01 Nov 2026 04:25:01 +0900</pubDate>
             <sparkle:version>3</sparkle:version>
