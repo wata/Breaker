@@ -27,6 +27,12 @@ macOS 26 or later.
 
 Download the latest pre-built application binary from Releases page and move it to `/Applications`. Breaker checks for updates automatically, and you can also choose Check for Updates… from the app menu.
 
+Or install it with [Homebrew](https://brew.sh):
+
+```sh
+brew install --cask wata/tap/breaker
+```
+
 On first launch, Breaker asks for permission to send notifications and to control System Events (to read your Folder Actions).
 
 Choose the apps to watch in Settings (⌘,). Use the filter in the sidebar to show launchd jobs installed by apps, or only items with issues.
