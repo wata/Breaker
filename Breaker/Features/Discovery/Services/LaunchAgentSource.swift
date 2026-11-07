@@ -168,10 +168,10 @@ struct LaunchAgentSource: ItemSource {
         let status: ItemStatus
         do {
             service = try await launchctl.print(label: job.label, in: Self.domain(of: job.origin))
-            let record = await runHistory.observe(key: key, runs: service?.runs, now: now)
+            let record = await runHistory.observe(key: key, runs: service?.runs, logSizes: LogReader.sizes(of: job.logPaths), now: now)
             lastRun = [logModificationDate, record?.lastObservedRun].compactMap { $0 }.max()
             // ログを読むのは C の対象（直前の終了コードが 0）のときだけにして、ジョブの数だけ読まない
-            let logError = isChecked && service?.lastExit == .code(0) ? await Self.logError(of: job, writtenSince: record?.lastRunNotBefore) : nil
+            let logError = isChecked && service?.lastExit == .code(0) ? await Self.logError(of: job, since: record) : nil
             status = Self.status(
                 isDisabledFile: job.isDisabledFile,
                 isDisabledLabel: isDisabledLabel,
@@ -217,17 +217,20 @@ struct LaunchAgentSource: ItemSource {
         )
     }
 
-    /// 標準エラーを先に見る。原因は標準エラーに出ることが多い。最後の実行より前に書かれたログは、直した後の古い失敗なので見ない
-    private static func logError(of job: Job, writtenSince lastRunNotBefore: Date?) async -> String? {
-        // 標準出力と標準エラーを同じファイルに出すジョブは1回だけ読む
-        let paths = [job.standardErrorPath, job.standardOutPath].compactMap { $0 }.uniqued()
-            .filter { path in
-                guard let lastRunNotBefore else {
-                    return true
-                }
-                return LogReader.lastModificationDate(of: [path]).map { $0 >= lastRunNotBefore } ?? false
+    /**
+     標準エラーを先に見る。原因は標準エラーに出ることが多い。最後の実行より前に書かれたログは、直した後の古い失敗なので見ない。
+     最後の実行が書き始めた位置が分かればそこから後だけを、分からなければ最後の実行の後に更新されたファイルの末尾を見る
+     */
+    private static func logError(of job: Job, since record: RunHistory.Record?) async -> String? {
+        let paths = job.logPaths.filter { path in
+            guard let lastRunNotBefore = record?.lastRunNotBefore else {
+                return true
             }
-        return HealthCheck.logError(in: await LogReader.tails(of: paths, lineCount: HealthCheck.logLineCount))
+            return LogReader.lastModificationDate(of: [path]).map { $0 >= lastRunNotBefore } ?? false
+        }
+        return HealthCheck.logError(
+            in: await LogReader.tails(of: paths, lineCount: HealthCheck.logLineCount, from: record?.lastRunLogOffsets ?? [:])
+        )
     }
 }
 
@@ -246,6 +249,11 @@ extension LaunchAgentSource {
         let environmentVariables: [MonitoredItem.LaunchdJob.EnvironmentVariable]
         let requirements: [HealthCheck.Requirement]
         let autoDescription: String?
+
+        /// 標準エラー → 標準出力の順。同じファイルに出すジョブは1回だけ読む
+        var logPaths: [String] {
+            [standardErrorPath, standardOutPath].compactMap { $0 }.uniqued()
+        }
     }
 
     /**

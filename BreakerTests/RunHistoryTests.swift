@@ -22,7 +22,7 @@ struct RunHistoryTests {
         let now = start.addingTimeInterval(1800)
         #expect(
             RunHistory.updated(record(runs: 44, observedAt: previous), saved: nil, runs: 45, now: now)
-                == record(runs: 45, observedAt: now, lastObservedRun: now, lastRunNotBefore: previous)
+                == record(runs: 45, observedAt: now, lastObservedRun: now, lastRunNotBefore: previous, lastRunLogOffsets: [:])
         )
     }
 
@@ -31,7 +31,7 @@ struct RunHistoryTests {
         let now = start.addingTimeInterval(120)
         #expect(
             RunHistory.updated(record(runs: 44, observedAt: start), saved: nil, runs: 1, now: now)
-                == record(runs: 1, observedAt: now, lastObservedRun: now, lastRunNotBefore: start)
+                == record(runs: 1, observedAt: now, lastObservedRun: now, lastRunNotBefore: start, lastRunLogOffsets: [:])
         )
     }
 
@@ -75,7 +75,36 @@ struct RunHistoryTests {
         #expect(await next.observe(key: "a", runs: 4, now: now)?.lastRunNotBefore == start)
     }
 
-    private func record(runs: Int, observedAt: Date, lastObservedRun: Date? = nil, lastRunNotBefore: Date? = nil) -> Record {
-        Record(watchStart: start, runs: runs, lastObservedRun: lastObservedRun, lastObservation: observedAt, lastRunNotBefore: lastRunNotBefore)
+    /// 実行を見たら、1つ前に測ったログの大きさがその実行の書き始めの位置になる
+    @Test func runStartsLogAtPreviousSize() {
+        let previous = Record(watchStart: start, runs: 44, lastObservedRun: nil, lastObservation: start, lastRunNotBefore: nil, logSizes: ["/a.log": 100])
+        let now = start.addingTimeInterval(300)
+        let ran = RunHistory.updated(previous, saved: nil, runs: 45, logSizes: ["/a.log": 130], now: now)
+        #expect(ran?.lastRunLogOffsets == ["/a.log": 100])
+        #expect(ran?.logSizes == ["/a.log": 130])
+        // 次の実行までは同じ位置から読み、前の実行の失敗が残っていても最新の実行の分だけを見る
+        let idle = RunHistory.updated(ran, saved: nil, runs: 45, logSizes: ["/a.log": 130], now: now.addingTimeInterval(60))
+        #expect(idle?.lastRunLogOffsets == ["/a.log": 100])
+    }
+
+    /// 起動して初めて見たときは、前回の終了までに見た大きさから、まだ実行を見ていなければ位置は分からない
+    @Test func logOffsetsCarryOverFromSaved() {
+        let saved = RunHistory.Saved(runs: 44, lastObservation: start, lastRunNotBefore: nil, logSizes: ["/a.log": 100], lastRunLogOffsets: ["/a.log": 40])
+        let now = start.addingTimeInterval(3600)
+        #expect(RunHistory.updated(nil, saved: saved, runs: 46, now: now)?.lastRunLogOffsets == ["/a.log": 100])
+        #expect(RunHistory.updated(nil, saved: saved, runs: 44, now: now)?.lastRunLogOffsets == ["/a.log": 40])
+        #expect(RunHistory.updated(nil, saved: nil, runs: 44, now: now)?.lastRunLogOffsets == nil)
+    }
+
+    /// 前の版で保存した、大きさを持たない記録も読める
+    @Test func decodesSavedWithoutLogSizes() throws {
+        let json = #"{"runs":3,"lastObservation":0}"#
+        let saved = try JSONDecoder().decode(RunHistory.Saved.self, from: Data(json.utf8))
+        #expect(saved.logSizes == nil)
+        #expect(saved.lastRunLogOffsets == nil)
+    }
+
+    private func record(runs: Int, observedAt: Date, lastObservedRun: Date? = nil, lastRunNotBefore: Date? = nil, lastRunLogOffsets: [String: Int]? = nil) -> Record {
+        Record(watchStart: start, runs: runs, lastObservedRun: lastObservedRun, lastObservation: observedAt, lastRunNotBefore: lastRunNotBefore, lastRunLogOffsets: lastRunLogOffsets)
     }
 }

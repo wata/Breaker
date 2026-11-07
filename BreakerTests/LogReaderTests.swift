@@ -51,6 +51,27 @@ struct LogReaderTests {
         #expect(lines.last == "line 300")
     }
 
+    /// 最新の実行が書き始めた位置より前の行は読まない
+    @Test func readsOnlyAfterStart() async throws {
+        let directory = try TemporaryDirectory()
+        let url = directory.url.appending(path: "job.log")
+        let old = "メール送信失敗\n"
+        try (old + "やることなし\n").write(to: url, atomically: true, encoding: .utf8)
+
+        let tail = try await LogReader.tail(of: url.path(percentEncoded: false), lineCount: 20, from: old.utf8.count)
+        #expect(tail == "やることなし")
+    }
+
+    /// 書き始めの位置よりファイルが小さいのは作り直されたからなので、頭から読む
+    @Test func readsWholeFileWhenShorterThanStart() async throws {
+        let directory = try TemporaryDirectory()
+        let url = directory.url.appending(path: "job.log")
+        try "a\nb\n".write(to: url, atomically: true, encoding: .utf8)
+
+        let tail = try await LogReader.tail(of: url.path(percentEncoded: false), lineCount: 20, from: 1000)
+        #expect(tail == "a\nb")
+    }
+
     @Test func missingFileIsNil() async throws {
         let tail = try await LogReader.tail(of: "/nonexistent/Breaker.log", lineCount: 10)
         #expect(tail == nil)

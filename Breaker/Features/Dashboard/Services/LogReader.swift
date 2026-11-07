@@ -15,26 +15,35 @@ enum LogReader {
             .matchingSemantics(RegexSemanticLevel.unicodeScalar)
     }
 
-    /// ファイルがなければ nil。メインスレッドを止めないよう、呼び出し元のアクターから外して読む
+    /**
+     ファイルがなければ nil。メインスレッドを止めないよう、呼び出し元のアクターから外して読む。
+     `start` より前は読まない。ファイルが `start` より小さければ切り詰められたか作り直されたので、頭から読む。
+     `start` ちょうどから読むときは、行の途中かもしれなくても先頭の行を捨てない。最新の実行のエラー行を落とさないため
+     */
     @concurrent
-    static func tail(of path: String, lineCount: Int) async throws -> String? {
+    static func tail(of path: String, lineCount: Int, from start: Int = 0) async throws -> String? {
         guard FileManager.default.fileExists(atPath: path) else {
             return nil
         }
         let handle = try FileHandle(forReadingFrom: URL(filePath: path))
         defer { try? handle.close() }
         let size = try handle.seekToEnd()
-        let offset = size > maxBytes ? size - maxBytes : 0
+        let requested = UInt64(max(start, 0))
+        let start = requested <= size ? requested : 0
+        let offset = max(start, size > maxBytes ? size - maxBytes : 0)
         try handle.seek(toOffset: offset)
         let text = String(decoding: try handle.readToEnd() ?? Data(), as: UTF8.self)
-        return lastLines(of: plainText(of: text), count: lineCount, startsMidLine: offset > 0)
+        return lastLines(of: plainText(of: text), count: lineCount, startsMidLine: offset > start)
     }
 
-    /// 渡した順に末尾を読む。無いファイル・読めないファイルは飛ばす
-    static func tails(of paths: [String], lineCount: Int) async -> [String] {
+    /**
+     渡した順に末尾を読む。`offsets` にあるパスはその位置より後だけを読む。`offsets` に無いパスは頭から読む
+     （前の観測のときに無かったログは、まるごと最後の実行以降に書かれた）。無いファイル・読めないファイルは飛ばす
+     */
+    static func tails(of paths: [String], lineCount: Int, from offsets: [String: Int] = [:]) async -> [String] {
         var logs: [String] = []
         for path in paths {
-            guard let text = try? await tail(of: path, lineCount: lineCount) else { continue }
+            guard let text = try? await tail(of: path, lineCount: lineCount, from: offsets[path] ?? 0) else { continue }
             logs.append(text)
         }
         return logs
@@ -55,6 +64,13 @@ enum LogReader {
             return nil
         }
         return Stamp(modificationDate: values.contentModificationDate, size: values.fileSize)
+    }
+
+    /// ある分だけの大きさ（バイト）。無いファイルは入れない
+    static func sizes(of paths: [String]) -> [String: Int] {
+        paths.reduce(into: [:]) { sizes, path in
+            sizes[path] = stamp(of: path)?.size
+        }
     }
 
     /// ログのうちいちばん新しい更新時刻。どれも無ければ nil

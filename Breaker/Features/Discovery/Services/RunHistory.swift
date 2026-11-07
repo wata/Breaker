@@ -22,6 +22,14 @@ actor RunHistory {
          直した後も前の失敗が残り続ける
          */
         let lastRunNotBefore: Date?
+        /// `lastObservation` に測ったログの大きさ（パス → バイト）
+        var logSizes: [String: Int] = [:]
+        /**
+         最後の実行が書き始めた位置（実行を見た1つ前に測った大きさ）。これより後が最新の実行のログ。
+         時刻を付けないログもあるので、行ごとにどの実行のものかは大きさでしか分けられない。
+         ジョブが毎回追記するログの末尾には前の実行の失敗が残るので、更新時刻だけでは直った後も失敗に見える。nil は分からないこと
+         */
+        var lastRunLogOffsets: [String: Int]?
     }
 
     /// 前回の起動で最後に見た runs と時刻。`Record` のうち古いログを見分けるのに要るものだけ
@@ -29,6 +37,9 @@ actor RunHistory {
         let runs: Int
         let lastObservation: Date
         let lastRunNotBefore: Date?
+        /// 前の版で保存したものには無いので省略できる
+        var logSizes: [String: Int]?
+        var lastRunLogOffsets: [String: Int]?
     }
 
     /// 項目の ID の元をキーにした `Saved` の辞書（JSON）を UserDefaults に入れておくキー
@@ -45,10 +56,18 @@ actor RunHistory {
     }
 
     /// key は項目の ID の元。同じラベルが `~/Library/LaunchAgents` と `/Library/LaunchAgents` にあっても別のジョブとして覚える
-    func observe(key: String, runs: Int?, now: Date) -> Record? {
-        let record = Self.updated(records[key], saved: saved[key], runs: runs, now: now)
+    func observe(key: String, runs: Int?, logSizes: [String: Int] = [:], now: Date) -> Record? {
+        let record = Self.updated(records[key], saved: saved[key], runs: runs, logSizes: logSizes, now: now)
         records[key] = record
-        saved[key] = record.map { Saved(runs: $0.runs, lastObservation: $0.lastObservation, lastRunNotBefore: $0.lastRunNotBefore) }
+        saved[key] = record.map {
+            Saved(
+                runs: $0.runs,
+                lastObservation: $0.lastObservation,
+                lastRunNotBefore: $0.lastRunNotBefore,
+                logSizes: $0.logSizes,
+                lastRunLogOffsets: $0.lastRunLogOffsets
+            )
+        }
         defaults?.set(try? JSONEncoder().encode(saved), forKey: Self.savedKey)
         return record
     }
@@ -58,7 +77,7 @@ actor RunHistory {
      起動して初めて見たときは、前回の終了までに見た runs から変わっていれば、その実行は前回最後に見た時刻より後に始まっている。
      Mac の再起動で runs が数え直されて偶然同じになっても、前回の下限を引き継ぐだけなので古いログを見落とす側にはずれない
      */
-    static func updated(_ record: Record?, saved: Saved?, runs: Int?, now: Date) -> Record? {
+    static func updated(_ record: Record?, saved: Saved?, runs: Int?, logSizes: [String: Int] = [:], now: Date) -> Record? {
         guard let runs else {
             return nil
         }
@@ -68,7 +87,9 @@ actor RunHistory {
                 runs: runs,
                 lastObservedRun: nil,
                 lastObservation: now,
-                lastRunNotBefore: saved.flatMap { $0.runs == runs ? $0.lastRunNotBefore : $0.lastObservation }
+                lastRunNotBefore: saved.flatMap { $0.runs == runs ? $0.lastRunNotBefore : $0.lastObservation },
+                logSizes: logSizes,
+                lastRunLogOffsets: saved.flatMap { $0.runs == runs ? $0.lastRunLogOffsets : $0.logSizes }
             )
         }
         let didRun = runs != record.runs
@@ -77,7 +98,9 @@ actor RunHistory {
             runs: runs,
             lastObservedRun: didRun ? now : record.lastObservedRun,
             lastObservation: now,
-            lastRunNotBefore: didRun ? record.lastObservation : record.lastRunNotBefore
+            lastRunNotBefore: didRun ? record.lastObservation : record.lastRunNotBefore,
+            logSizes: logSizes,
+            lastRunLogOffsets: didRun ? record.logSizes : record.lastRunLogOffsets
         )
     }
 }
