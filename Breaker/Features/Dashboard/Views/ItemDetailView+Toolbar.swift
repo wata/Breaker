@@ -6,7 +6,9 @@ extension ItemDetailView {
      ボタンの組は状態で変えず、できないものは無効にする。ツールバーのボタンは文字を出さないので、何をするかはツールチップで伝える
      */
     struct Toolbar: ToolbarContent {
+        let itemID: MonitoredItem.ID
         let controls: [ItemAction]
+        let promptAction: ItemAction?
         let secondaryControls: [ItemAction]
         let files: [ItemAction]
         let isLocked: Bool
@@ -22,6 +24,12 @@ extension ItemDetailView {
                     .disabled(isLocked || !action.isEnabled)
                 }
 
+                if let promptAction {
+                    CopyButton(action: promptAction, isLocked: isLocked, perform: perform)
+                        // 詳細ペインは項目を切り替えても作り直されないので、前の項目のチェックマークを持ち越さない
+                        .id(itemID)
+                }
+
                 if !secondaryControls.isEmpty || !files.isEmpty {
                     Menu("More", systemImage: "ellipsis.circle") {
                         ItemActionMenuItems(actions: secondaryControls, perform: perform)
@@ -35,6 +43,55 @@ extension ItemDetailView {
                     .help("More")
                     .disabled(isLocked)
                 }
+            }
+        }
+    }
+
+    /**
+     押してもクリップボードに入るだけで画面は何も変わらないので、しばらくチェックマークに変えてコピーできたことを伝える。
+     チェックマークを出している間も押し直せる（ログが伸びていれば中身が変わる）
+     */
+    struct CopyButton: View {
+        let action: ItemAction
+        let isLocked: Bool
+        let perform: (ItemAction) -> Void
+
+        @State private var isCopied = false
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+        var body: some View {
+            Button(action.title, systemImage: isCopied ? "checkmark" : action.systemImage) {
+                perform(action)
+                isCopied = true
+                // チェックマークは見えないと伝わらないので、VoiceOver には読み上げで伝える
+                AccessibilityNotification.Announcement(String(localized: "Copied", comment: "VoiceOver announcement after the prompt for AI is copied to the clipboard")).post()
+            }
+            .help(help)
+            .disabled(isLocked || !action.isEnabled)
+            /**
+             contentTransition はアニメーションの中でしか効かないので、チェックマークに変える時と戻す時の両方を isCopied で拾う。
+             SF Symbols の効果が「視差効果を減らす」に自動で従うとはドキュメントに書かれていないので、オンなら切り替えるだけにする
+             */
+            .contentTransition(.symbolEffect(.replace))
+            .animation(reduceMotion ? nil : .smooth, value: isCopied)
+            // ボタンが消えたら（ほかの項目を選んだら）待つのもやめる
+            .task(id: isCopied) {
+                guard isCopied else { return }
+                try? await Task.sleep(for: .seconds(2))
+                isCopied = false
+            }
+        }
+
+        /**
+         正常な項目では無効のまま理由が分からないので、押せないときはいつ使えるかを添える。
+         ほかのボタンと同じく名前も出さないと何のボタンか分からないので、条件で置き換えず次の行に足す
+         */
+        private var help: String {
+            if action.isEnabled {
+                return action.title
+            } else {
+                let condition = String(localized: "Available when the item has failed or needs attention", comment: "Tooltip line explaining when the Copy Prompt for AI button can be used")
+                return "\(action.title)\n\(condition)"
             }
         }
     }

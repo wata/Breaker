@@ -23,15 +23,35 @@ extension NSWorkspace: WorkspaceOpening {
     }
 }
 
+/// テストで利用者のクリップボードを書き換えずに中身を確かめられるよう、`NSPasteboard` の使う部分だけを切り出す
+@MainActor
+protocol PasteboardWriting {
+    func write(_ text: String)
+}
+
+extension NSPasteboard: PasteboardWriting {
+    func write(_ text: String) {
+        clearContents()
+        setString(text, forType: .string)
+    }
+}
+
 @MainActor
 struct ItemActionPerformer {
     private let jobActions: JobActions
     private let workspace: any WorkspaceOpening
+    private let pasteboard: any PasteboardWriting
     private let fileManager: FileManager
 
-    init(jobActions: JobActions = JobActions(), workspace: any WorkspaceOpening = NSWorkspace.shared, fileManager: FileManager = .default) {
+    init(
+        jobActions: JobActions = JobActions(),
+        workspace: any WorkspaceOpening = NSWorkspace.shared,
+        pasteboard: any PasteboardWriting = NSPasteboard.general,
+        fileManager: FileManager = .default
+    ) {
         self.jobActions = jobActions
         self.workspace = workspace
+        self.pasteboard = pasteboard
         self.fileManager = fileManager
     }
 
@@ -60,6 +80,9 @@ struct ItemActionPerformer {
         case .editSchedule:
             // シートを開く操作なので `AppModel.request` が受け取り、ここには来ない
             break
+
+        case .copyPrompt(let item):
+            pasteboard.write(await AIPrompt.make(for: item, fileManager: fileManager))
 
         case .unavailable:
             // 無効のボタンにしか付けないので、押されることはない

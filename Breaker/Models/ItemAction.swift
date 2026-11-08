@@ -11,6 +11,8 @@ struct ItemAction: Identifiable, Hashable, Sendable {
         case launchApp(URL)
         /// シートを開くだけ。保存は `AppModel.saveSchedule` が行い、そこで一覧を取り直す
         case editSchedule(MonitoredItem.LaunchdJob)
+        /// 項目の失敗を AI に調べさせるプロンプトをクリップボードに入れる。ログは押したときに読む
+        case copyPrompt(MonitoredItem)
         /// その種類ではできない操作。ツールバーのボタンの組をそろえて無効で見せるためだけに使い、押せない
         case unavailable
 
@@ -20,7 +22,7 @@ struct ItemAction: Identifiable, Hashable, Sendable {
             case .job, .launchApp:
                 true
 
-            case .open, .openAsText, .reveal, .editSchedule, .unavailable:
+            case .open, .openAsText, .reveal, .editSchedule, .copyPrompt, .unavailable:
                 false
             }
         }
@@ -44,6 +46,11 @@ struct ItemAction: Identifiable, Hashable, Sendable {
             ItemAction(title: reloadTitle, systemImage: "arrow.clockwise", operation: .unavailable, isEnabled: false),
         ]
     }
+
+    /// launchd ジョブと cron 以外を選んでいるときにメニューバーの「項目」で無効で見せる。`MonitoredItem.promptAction` に名前と絵を合わせる
+    static var unavailablePromptAction: ItemAction {
+        ItemAction(title: copyPromptTitle, systemImage: copyPromptSystemImage, operation: .unavailable, isEnabled: false)
+    }
 }
 
 extension ItemAction {
@@ -66,6 +73,15 @@ extension ItemAction {
 
     static var showInFinderTitle: String {
         String(localized: "Show in Finder", comment: "Action that reveals a file in Finder")
+    }
+
+    static var copyPromptTitle: String {
+        String(localized: "Copy Prompt for AI", comment: "Action that copies a prompt asking an AI assistant to investigate why the selected item fails")
+    }
+
+    /// HIG がコピーに充てている絵
+    static var copyPromptSystemImage: String {
+        "document.on.document"
     }
 }
 
@@ -115,6 +131,25 @@ extension MonitoredItem {
 
         case .folderAction, .swiftBarPlugin, .sourceFailure:
             []
+        }
+    }
+
+    /**
+     失敗を AI に調べさせるプロンプトのコピー。状態を変えないので `controlActions` に入れず、サイドバーの右クリックメニューにも出さない。
+     ツールバーとメニューバーの「項目」の組は状態で変えない方針なので、launchd ジョブと cron では常に出し、調べることのない正常時は無効にする
+     */
+    var promptAction: ItemAction? {
+        switch detail {
+        case .launchdJob, .cronJob:
+            ItemAction(
+                title: ItemAction.copyPromptTitle,
+                systemImage: ItemAction.copyPromptSystemImage,
+                operation: .copyPrompt(self),
+                isEnabled: status.isAbnormal
+            )
+
+        case .folderAction, .swiftBarPlugin, .monitoredApp, .sourceFailure:
+            nil
         }
     }
 

@@ -68,7 +68,9 @@ struct ItemDetailView: View {
         .formStyle(.grouped)
         .toolbar {
             Toolbar(
+                itemID: item.id,
                 controls: item.controlActions,
+                promptAction: item.promptAction,
                 secondaryControls: item.secondaryControlActions,
                 files: item.fileActions(),
                 isLocked: isLocked,

@@ -251,6 +251,48 @@ struct ItemActionTests {
         #expect(MonitoredItem.samples.filter { $0.kind != .launchdJob }.allSatisfy { $0.editActions.isEmpty })
     }
 
+    /// launchd と cron では常に出し、調べることのある異常時だけ押せる。状態を変えないので一覧は取り直さない
+    @Test(arguments: [
+        (ItemStatus.failed(reason: "Exit code 1"), true),
+        (.warning(reason: "Didn't run as scheduled"), true),
+        (.ok, false),
+        (.running, false),
+        (.inactive(reason: "Disabled"), false),
+    ])
+    func promptActionIsEnabledOnlyWhenAbnormal(status: ItemStatus, isEnabled: Bool) throws {
+        let job = MonitoredItem.LaunchdJob.stub()
+        let item = MonitoredItem(key: job.label, name: job.label, status: status, detail: .launchdJob(job))
+        let action = try #require(item.promptAction)
+        #expect(action.title == "Copy Prompt for AI")
+        #expect(action.operation == .copyPrompt(item))
+        #expect(action.isEnabled == isEnabled)
+        #expect(!action.operation.changesState)
+        // サイドバーの右クリックメニューに出さない
+        #expect(!item.controlActions.contains(action))
+    }
+
+    /// メニューバーの「項目」では対象外の項目でも同じ名前と絵で無効で見せるので、ツールバーのものとずれないこと
+    @Test func unavailablePromptActionMatchesPromptAction() throws {
+        let job = MonitoredItem.LaunchdJob.stub()
+        let item = MonitoredItem(key: job.label, name: job.label, status: .failed(reason: "Exit code 1"), detail: .launchdJob(job))
+        let action = try #require(item.promptAction)
+        let unavailable = ItemAction.unavailablePromptAction
+        #expect(unavailable.title == action.title)
+        #expect(unavailable.systemImage == action.systemImage)
+        #expect(action.systemImage == "document.on.document")
+        #expect(!unavailable.isEnabled)
+        #expect(unavailable.operation == .unavailable)
+    }
+
+    @Test func onlyLaunchdAndCronOfferPrompt() {
+        let others = MonitoredItem.samples.filter { ![.launchdJob, .cronJob].contains($0.kind) } + [MonitoredItem.sampleSwiftBarPlugin, MonitoredItem.sampleSourceFailure]
+        #expect(!others.isEmpty)
+        #expect(others.allSatisfy { $0.promptAction == nil })
+        let crons = MonitoredItem.samples.filter { $0.kind == .cronJob }
+        #expect(!crons.isEmpty)
+        #expect(crons.allSatisfy { $0.promptAction != nil })
+    }
+
     @Test func sourceFailureHasNoActions() {
         #expect(MonitoredItem.sampleSourceFailure.editActions.isEmpty)
         #expect(MonitoredItem.sampleSourceFailure.controlActions.isEmpty)

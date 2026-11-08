@@ -34,7 +34,7 @@ extension BreakerApp {
 extension BreakerApp {
     /**
      選んでいる項目へのツールバーと同じ操作。メニューバーの項目は選んでいるものによって組を変えず、
-     launchd ジョブ以外を選んでいる・何も選んでいないときも同じ3つを無効で見せる。
+     対象外の項目を選んでいる・何も選んでいないときも同じ組を無効で見せる。
      ショートカットは付けない（ツールバーや右クリックにも無く、ジョブを走らせる・止める操作を打ち間違いで起こさないため）
      */
     struct ItemMenu: View {
@@ -42,18 +42,30 @@ extension BreakerApp {
 
         var body: some View {
             let item = appModel?.selectedItem
-            ItemActionMenuItems(actions: item?.launchdJobActions ?? ItemAction.unavailableJobActions) { action in
-                guard
-                    let appModel,
-                    let item
-                else {
-                    return
+            Group {
+                ItemActionMenuItems(actions: item?.launchdJobActions ?? ItemAction.unavailableJobActions) { action in
+                    request(action, on: item)
                 }
-                Task {
-                    await appModel.request(action, on: item)
+
+                Divider()
+
+                ItemActionMenuItems(actions: [item?.promptAction ?? ItemAction.unavailablePromptAction]) { action in
+                    request(action, on: item)
                 }
             }
             .disabled(appModel?.actingItemID != nil)
+        }
+
+        private func request(_ action: ItemAction, on item: MonitoredItem?) {
+            guard
+                let appModel,
+                let item
+            else {
+                return
+            }
+            Task {
+                await appModel.request(action, on: item)
+            }
         }
     }
 

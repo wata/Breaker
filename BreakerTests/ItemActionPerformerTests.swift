@@ -43,8 +43,26 @@ struct ItemActionPerformerTests {
         #expect(workspace.calls == ["launch /Applications/Example.app"])
     }
 
-    private func performer(_ workspace: StubWorkspace) -> ItemActionPerformer {
-        ItemActionPerformer(jobActions: JobActions(launchctl: LaunchctlService(shell: StubShell(output: .init(status: 0, stdout: "", stderr: "")))), workspace: workspace)
+    @Test func copyPromptWritesToPasteboard() async throws {
+        let workspace = StubWorkspace()
+        let pasteboard = StubPasteboard()
+        let job = MonitoredItem.LaunchdJob.stub(programArguments: ["/usr/bin/false"])
+        let item = MonitoredItem(key: job.label, name: job.label, status: .failed(reason: "Exit code 1"), detail: .launchdJob(job))
+
+        try await performer(workspace, pasteboard: pasteboard).perform(.copyPrompt(item))
+
+        #expect(pasteboard.texts.count == 1)
+        #expect(pasteboard.texts.first?.hasPrefix("cd /tmp/LaunchAgents\n") == true)
+        #expect(pasteboard.texts.first?.contains("Label: com.example.job") == true)
+        #expect(workspace.calls.isEmpty)
+    }
+
+    private func performer(_ workspace: StubWorkspace, pasteboard: StubPasteboard = StubPasteboard()) -> ItemActionPerformer {
+        ItemActionPerformer(
+            jobActions: JobActions(launchctl: LaunchctlService(shell: StubShell(output: .init(status: 0, stdout: "", stderr: "")))),
+            workspace: workspace,
+            pasteboard: pasteboard
+        )
     }
 }
 
@@ -68,5 +86,14 @@ final class StubWorkspace: WorkspaceOpening {
 
     func openApplication(at url: URL) async throws {
         calls.append("launch \(url.path(percentEncoded: false))")
+    }
+}
+
+@MainActor
+final class StubPasteboard: PasteboardWriting {
+    private(set) var texts = [String]()
+
+    func write(_ text: String) {
+        texts.append(text)
     }
 }
