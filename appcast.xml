@@ -3,6 +3,19 @@
     <channel>
         <title>Breaker</title>
         <item>
+            <title>1.2.1</title>
+            <pubDate>Mon, 16 Nov 2026 23:54:05 +0900</pubDate>
+            <sparkle:version>7</sparkle:version>
+            <sparkle:shortVersionString>1.2.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <description sparkle:format="markdown"><![CDATA[- New: launchd job details are now graphical. A big countdown to the next run, and a timeline of scheduled runs, the last run (✓/✗), missed runs and the next run. The timeline's width follows how often the job runs, from 15 minutes to a year.
+- Always-running (KeepAlive) jobs show their uptime and a band from when the process started. Jobs without a fixed schedule show their last run.
+- Symbols at the top right of the card show how each job is triggered: set times, interval, at login, file watch or always running.
+- Fixed: a process ID of four digits or more no longer shows a thousands separator.
+]]></description>
+            <enclosure url="https://github.com/wata/Breaker/releases/download/1.2.1/Breaker-1.2.1.zip" length="5646001" type="application/octet-stream" sparkle:edSignature="3QyEyfy07P3G3IsGzwrT5LQ9LOHwiwJFr9yq885OjGOlUUsJgc+NIZotFFgvzvXP4XcUlp81NBZXqyKdH16QDg=="/>
+        </item>
+        <item>
             <title>1.2.0</title>
             <pubDate>Mon, 16 Nov 2026 17:36:54 +0900</pubDate>
             <sparkle:version>6</sparkle:version>
