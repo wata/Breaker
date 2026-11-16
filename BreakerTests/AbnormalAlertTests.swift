@@ -106,7 +106,7 @@ struct AbnormalAlertTests {
             key: key,
             name: key,
             status: status,
-            detail: .swiftBarPlugin(.init(fileURL: URL(filePath: "/tmp/\(key).sh"), refreshInterval: nil))
+            detail: .folderAction(.init(folderURL: URL(filePath: "/tmp/\(key)", directoryHint: .isDirectory), scriptNames: [], isEnabled: true))
         )
     }
 }

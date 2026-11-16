@@ -23,10 +23,17 @@ extension SidebarView {
                         .truncationMode(.middle)
 
                     if let detail = item.rowDetail(now: .now, showsKind: showsKind) {
-                        Text(detail)
-                            .font(.SidebarDetail.regular(for: rowSize))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
+                        Group {
+                            if let systemImage = item.rowDetailSystemImage {
+                                Label(detail, systemImage: systemImage)
+                                    .labelStyle(.titleAndIcon)
+                            } else {
+                                Text(detail)
+                            }
+                        }
+                        .font(.SidebarDetail.regular(for: rowSize))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                     }
                 }
             }
@@ -37,19 +44,35 @@ extension SidebarView {
 
 extension MonitoredItem {
     /**
-     サイドバーの行の2行目。理由のある状態（異常・停止・未確認）は理由、正常・実行中は次回、次回が無ければ前回を出す。
-     前回と次回を並べるのは詳細の概要に任せる。予定で動かない種類の正常（フォルダアクション・SwiftBar・起動中のアプリ）は、
+     サイドバーの行の2行目。理由のある状態（異常・停止・未確認）は理由、正常・実行中は次回、次回が無ければ前回を出す（ネットワークは速度と遅延の要約）。
+     前回と次回を並べるのは詳細の概要に任せる。予定で動かない種類の正常（フォルダアクション）は、
      状態の記号のほかに言うことが無いので2行目を出さない
      */
     func rowDetail(now: Date, showsKind: Bool, calendar: Calendar = .current, locale: Locale = .current) -> String? {
         if let reason = status.reason {
             return showsKind ? Self.joined(kind.shortTitle, reason, locale: locale) : reason
         }
+        // ネットワークは予定で動かないので、前回・次回の代わりに速度と遅延の要約を出す
+        if case .network(let health) = detail {
+            return health.summary(locale: locale)
+        }
         guard let dates = runDates(now: now) else {
             return nil
         }
         return dates.next.map { Self.nextRunText($0, now: now, calendar: calendar, locale: locale) }
             ?? dates.last.map { Self.lastRunText($0, style: .relative, now: now, calendar: calendar, locale: locale) }
+    }
+
+    /// ネットワークの速度と遅延の要約には、どの経路の値かを接続の種類の記号で添える。理由を出すときは添えない
+    var rowDetailSystemImage: String? {
+        if
+            status.reason == nil,
+            let health = networkHealth
+        {
+            health.interface.systemImage
+        } else {
+            nil
+        }
     }
 
     /**
@@ -90,4 +113,3 @@ extension MonitoredItem {
     .environment(\.sidebarRowSize, rowSize)
     .frame(width: Layout.sidebarIdealWidth)
 }
-

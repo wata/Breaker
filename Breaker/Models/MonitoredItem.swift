@@ -2,19 +2,18 @@ import Foundation
 
 struct MonitoredItem: Identifiable, Hashable, Sendable {
     enum Kind: String, CaseIterable, Sendable {
+        /// 自動化ではないが、つながらないと他の項目も動かないので、要確認の次（一覧の先頭）に置く
+        case network
         case launchdJob
         case cronJob
         case folderAction
-        case swiftBarPlugin
-        case monitoredApp
     }
 
     enum Detail: Hashable, Sendable {
         case launchdJob(LaunchdJob)
         case cronJob(CronJob)
         case folderAction(FolderAction)
-        case swiftBarPlugin(SwiftBarPlugin)
-        case monitoredApp(MonitoredApp)
+        case network(NetworkHealth)
         /// その種類の検出自体が失敗した（osascript が拒否された等）。他の種類の表示は続ける
         case sourceFailure(Kind)
     }
@@ -85,18 +84,6 @@ struct MonitoredItem: Identifiable, Hashable, Sendable {
         let isEnabled: Bool
     }
 
-    struct SwiftBarPlugin: Hashable, Sendable {
-        let fileURL: URL
-        /// ファイル名の `name.5m.sh` の `5m` 部分から解釈した実行間隔
-        let refreshInterval: TimeInterval?
-    }
-
-    struct MonitoredApp: Hashable, Sendable {
-        let bundleID: String
-        let appURL: URL
-        let isRunning: Bool
-    }
-
     let id: String
     let name: String
     let status: ItemStatus
@@ -104,7 +91,7 @@ struct MonitoredItem: Identifiable, Hashable, Sendable {
     /// スクリプトのヘッダーや README から取った用途の説明。取れなければ nil
     let autoDescription: String?
 
-    /// id は種類ごとの一意キー（ラベル・パス・Bundle ID）に種類を前置して作り、種類をまたいだ衝突を防ぐ
+    /// id は種類ごとの一意キー（ラベル・パス・crontab の行）に種類を前置して作り、種類をまたいだ衝突を防ぐ
     init(key: String, name: String, status: ItemStatus, detail: Detail, autoDescription: String? = nil) {
         self.name = name
         self.status = status
@@ -117,20 +104,28 @@ struct MonitoredItem: Identifiable, Hashable, Sendable {
         detail.kind
     }
 
-    /// 通知・件数に数える対象か。cron・フォルダアクション・SwiftBar・監視するアプリは利用者が自分で置いた・選んだものなので、常に true
+    /// 通知・件数に数える対象か。cron・フォルダアクションは利用者が自分で置いたものなので、常に true。ネットワークの通知は `isReportedAbnormal` で別に決める
     var isHomeItem: Bool {
         switch detail {
         case .launchdJob(let job):
             job.isHomeJob
 
-        case .cronJob, .folderAction, .swiftBarPlugin, .monitoredApp, .sourceFailure:
+        case .cronJob, .folderAction, .network, .sourceFailure:
             true
         }
     }
 
-    /// 通知・Dock バッジ・異常の件数に数える異常。ホームのジョブ以外の launchd ジョブは利用者が直すものではないので、一覧の色だけで見せる
+    /**
+     通知・Dock バッジ・異常の件数に数える異常。ホームのジョブ以外の launchd ジョブは利用者が直すものではないので、一覧の色だけで見せる。
+     ネットワークの要確認（遅延・ロス・Wi-Fi が弱い・計測の失敗・ログイン画面）は回線や場所しだいで出入りし、そのたびに知らせると煩いので、
+     つながらない失敗だけを数える
+     */
     var isReportedAbnormal: Bool {
-        status.isAbnormal && isHomeItem
+        if case .network = detail {
+            status.isFailed
+        } else {
+            status.isAbnormal && isHomeItem
+        }
     }
 }
 
@@ -146,11 +141,8 @@ extension MonitoredItem.Detail {
         case .folderAction:
             .folderAction
 
-        case .swiftBarPlugin:
-            .swiftBarPlugin
-
-        case .monitoredApp:
-            .monitoredApp
+        case .network:
+            .network
 
         case .sourceFailure(let kind):
             kind
@@ -189,15 +181,12 @@ extension MonitoredItem.Kind {
         case .folderAction:
             String(localized: "Folder Actions")
 
-        case .swiftBarPlugin:
-            String(localized: "SwiftBar Plugins")
-
-        case .monitoredApp:
-            String(localized: "Apps", comment: "Sidebar section title for monitored apps")
+        case .network:
+            Self.networkTitle
         }
     }
 
-    /// 要確認の節で、種類の混ざった行の理由の前に添える種類の手がかり。launchd・cron・SwiftBar は名前のまま訳さない
+    /// 要確認の節で、種類の混ざった行の理由の前に添える種類の手がかり。launchd・cron は名前のまま訳さない
     var shortTitle: String {
         switch self {
         case .launchdJob:
@@ -209,11 +198,34 @@ extension MonitoredItem.Kind {
         case .folderAction:
             String(localized: "Folder Action", comment: "A folder action: the section title in the detail pane, and the kind shown before the reason in the sidebar's Needs Attention section")
 
-        case .swiftBarPlugin:
-            "SwiftBar"
+        case .network:
+            Self.networkTitle
+        }
+    }
 
-        case .monitoredApp:
-            String(localized: "App", comment: "A monitored app: the section title in the detail pane, and the kind shown before the reason in the sidebar's Needs Attention section")
+    /// 節の見出しも要確認の行の手がかりも、ネットワークの項目は1つなので同じ言葉にする
+    private static var networkTitle: String {
+        String(localized: "Network", comment: "The network health check: the sidebar section title, and the kind shown before the reason in the sidebar's Needs Attention section")
+    }
+}
+
+extension MonitoredItem {
+    /// 何のための項目かを書き留める説明の欄を出すか。ネットワークと検出の失敗の行は利用者が置いた自動化ではないので、書くことが無い
+    var acceptsNote: Bool {
+        switch detail {
+        case .launchdJob, .cronJob, .folderAction:
+            true
+
+        case .network, .sourceFailure:
+            false
+        }
+    }
+
+    var networkHealth: NetworkHealth? {
+        if case .network(let health) = detail {
+            health
+        } else {
+            nil
         }
     }
 }

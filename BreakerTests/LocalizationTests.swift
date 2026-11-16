@@ -26,7 +26,6 @@ struct LocalizationTests {
         #expect(Self.ja(LocalizedStringResource("it may not be mounted", comment: "Note in parentheses after Folder not found")) == "未マウントの可能性")
         #expect(Self.ja("Can't read status") == "状態を読めません")
         #expect(Self.ja(LocalizedStringResource("Error in log", comment: "Reason of an item whose log has an error line. The line itself is shown separately")) == "ログにエラー")
-        #expect(Self.ja("Running from outside /Applications") == "/Applications 外から起動しています")
         #expect(
             Self.ja(LocalizedStringResource("Didn't run as scheduled", comment: "Reason of a job that didn't run at its scheduled time. The time is shown separately"))
                 == "予定どおり実行されていません"

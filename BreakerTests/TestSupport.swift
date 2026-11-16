@@ -2,11 +2,21 @@ import Foundation
 import Testing
 @testable import Breaker
 
+/// 時間切れ・キャンセル・起動の失敗など、コマンドが出力を返さずに終わる場合を再現する。`StubShell` は出力しか返せないので別に持つ
+struct ThrowingShell: ShellRunning {
+    let error: any Error
+
+    func run(_ executable: String, arguments: [String], timeout: Duration?) async throws -> ShellOutput {
+        throw error
+    }
+}
+
 /// 実コマンドを走らせず、引数に応じた出力を返す
 final class StubShell: ShellRunning, @unchecked Sendable {
     struct Call: Equatable {
         let executable: String
         let arguments: [String]
+        var timeout: Duration? = nil
     }
 
     private let respond: @Sendable (Call, [Call]) -> ShellOutput
@@ -30,8 +40,8 @@ final class StubShell: ShellRunning, @unchecked Sendable {
         lock.withLock { recordedCalls }
     }
 
-    func run(_ executable: String, arguments: [String]) async throws -> ShellOutput {
-        let call = Call(executable: executable, arguments: arguments)
+    func run(_ executable: String, arguments: [String], timeout: Duration?) async throws -> ShellOutput {
+        let call = Call(executable: executable, arguments: arguments, timeout: timeout)
         let history = lock.withLock {
             recordedCalls.append(call)
             return recordedCalls

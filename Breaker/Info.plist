@@ -20,6 +20,10 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Breaker reads the list of folder actions from System Events.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Breaker shows the name of the Wi-Fi network you're connected to. It doesn't use your location.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Breaker shows the name of the Wi-Fi network you're connected to. It doesn't use your location.</string>
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/wata/Breaker/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>

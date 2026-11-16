@@ -39,7 +39,7 @@ final class AppModel {
     }
 
     /**
-     一覧に出す launchd ジョブの範囲。要確認の節の launchd ジョブにも効き、cron・フォルダアクション・SwiftBar・アプリには効かない。
+     一覧に出す launchd ジョブの範囲。要確認の節の launchd ジョブにも効き、cron・フォルダアクション・ネットワークには効かない。
      `userAgents` はホームのジョブもアプリが入れたものも含めた `~/Library/LaunchAgents` のすべて
      */
     enum LaunchdScope: String, CaseIterable, Identifiable {

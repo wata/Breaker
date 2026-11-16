@@ -16,8 +16,6 @@ struct ItemDescriptionReaderTests {
         ("#!/usr/bin/python3\n\"\"\"\nチームの予定の自動同期。launchd から起動される。\n\"\"\"\n", "チームの予定の自動同期。"),
         ("#!/usr/bin/python3\n\"\"\"一行だけの docstring\"\"\"\nimport os\n", "一行だけの docstring"),
         ("#!/bin/bash\n# check.sh\n#\n# 証明書を確認する\n", "証明書を確認する"),
-        ("#!/bin/bash\n# <xbar.title>Speed</xbar.title>\n# <xbar.desc>回線速度を測る</xbar.desc>\n", "回線速度を測る"),
-        ("echo hi\n# <swiftbar.desc>シバンがなくてもメタデータは読む</swiftbar.desc>\n", "シバンがなくてもメタデータは読む"),
     ] as [(String, String?)])
     func readsHeader(script: String, expected: String?) {
         #expect(ItemDescriptionReader.headerDescription(ofScript: script) == expected)

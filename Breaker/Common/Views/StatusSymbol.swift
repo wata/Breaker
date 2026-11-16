@@ -18,7 +18,7 @@ struct StatusSymbol: View {
         Image(systemName: ItemStatus.widestSystemImage)
             .hidden()
             .overlay {
-                Image(systemName: item.statusSystemImage)
+                Image(systemName: item.status.systemImage)
                     .foregroundStyle(item.status.color)
             }
             .font(.SidebarStatus.regular(for: rowSize))

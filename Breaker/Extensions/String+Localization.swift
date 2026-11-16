@@ -11,4 +11,15 @@ extension String {
         resource.locale = locale
         self.init(localized: resource)
     }
+
+    /// `Failed (Exit code 1)` のように括弧の補足を続ける。日本語では全角の括弧にする
+    static func parenthesized(_ text: String, _ note: String, locale: Locale = .current) -> String {
+        String(
+            localized: LocalizedStringResource(
+                "\(text) (\(note))",
+                comment: "Text followed by a parenthetical, e.g. Failed (Exit code 1) or Folder not found (it may not be mounted)"
+            ),
+            language: locale
+        )
+    }
 }

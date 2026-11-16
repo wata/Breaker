@@ -54,6 +54,42 @@
           }
         }
       }
+    },
+    "NSLocationUsageDescription" : {
+      "comment" : "Privacy - Location Usage Description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Breaker shows the name of the Wi-Fi network you're connected to. It doesn't use your location."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続している Wi-Fi のネットワーク名を表示するため（位置情報そのものは使いません）"
+          }
+        }
+      }
+    },
+    "NSLocationWhenInUseUsageDescription" : {
+      "comment" : "Privacy - Location When In Use Usage Description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Breaker shows the name of the Wi-Fi network you're connected to. It doesn't use your location."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続している Wi-Fi のネットワーク名を表示するため（位置情報そのものは使いません）"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

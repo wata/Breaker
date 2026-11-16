@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Bindable var appModel: AppModel
+    let speedTestScheduler: SpeedTestScheduler
 
     var body: some View {
         NavigationSplitView {
@@ -14,6 +15,7 @@ struct ContentView: View {
                     refreshDate: appModel.lastRefreshDate,
                     actingItemID: appModel.actingItemID,
                     note: appModel.itemNotes[item.id],
+                    speedTestScheduler: speedTestScheduler,
                     saveNote: { appModel.saveNote($0, for: item) }
                 ) { action in
                     Task {
@@ -56,11 +58,12 @@ struct ContentView: View {
             Text(message)
         }
         .frame(minWidth: Layout.minWindowWidth, minHeight: Layout.minWindowHeight)
-        // メニューバーの「項目」「表示」が、このウインドウが手前にあるときだけ選択と絞り込みを扱えるようにする
+        // メニューバーの「項目」「表示」が、このウインドウが手前にあるときだけ選択と絞り込み・速度の計測を扱えるようにする
         .focusedSceneValue(appModel)
+        .focusedSceneValue(speedTestScheduler)
     }
 }
 
 #Preview {
-    ContentView(appModel: .preview(selectedID: MonitoredItem.samples[2].id))
+    ContentView(appModel: .preview(selectedID: MonitoredItem.samples[2].id), speedTestScheduler: .sampleData())
 }

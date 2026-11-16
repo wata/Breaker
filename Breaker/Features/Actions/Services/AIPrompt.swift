@@ -48,7 +48,7 @@ enum AIPrompt {
         case .cronJob(let job):
             script = job.scriptURL(fileManager: fileManager)
 
-        case .folderAction, .swiftBarPlugin, .monitoredApp, .sourceFailure:
+        case .folderAction, .network, .sourceFailure:
             script = nil
         }
         guard let folder = script?.deletingLastPathComponent() else {
@@ -83,11 +83,8 @@ enum AIPrompt {
         case .folderAction:
             "folder action"
 
-        case .swiftBarPlugin:
-            "SwiftBar plugin"
-
-        case .monitoredApp:
-            "app"
+        case .network:
+            "network health check"
         }
     }
 
@@ -124,7 +121,7 @@ enum AIPrompt {
                 lines.append("Script: \(script.path(percentEncoded: false))")
             }
 
-        case .folderAction, .swiftBarPlugin, .monitoredApp, .sourceFailure:
+        case .folderAction, .network, .sourceFailure:
             break
         }
         return lines
@@ -138,7 +135,7 @@ enum AIPrompt {
         case .cronJob(let job):
             job.logFiles
 
-        case .folderAction, .swiftBarPlugin, .monitoredApp, .sourceFailure:
+        case .folderAction, .network, .sourceFailure:
             []
         }
     }

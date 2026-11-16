@@ -26,7 +26,7 @@ extension ItemStatus {
     /// 通知・ツールチップに出す理由の全文。補足があれば括弧で続ける
     var fullReason: String? {
         reason.map { reason in
-            note.map { Self.parenthesized(reason, $0) } ?? reason
+            note.map { String.parenthesized(reason, $0) } ?? reason
         }
     }
 
@@ -37,16 +37,11 @@ extension ItemStatus {
     var summary: String {
         switch self {
         case .failed(let reason, _):
-            Self.parenthesized(title, reason)
+            String.parenthesized(title, reason)
 
         default:
             reason ?? title
         }
-    }
-
-    /// 日本語では全角の括弧にする
-    private static func parenthesized(_ text: String, _ note: String) -> String {
-        String(localized: "\(text) (\(note))", comment: "Text followed by a parenthetical, e.g. Failed (Exit code 1) or Folder not found (it may not be mounted)")
     }
 
     /// 状態の色を付けて出すシンボル。色だけで状態を伝えないよう、状態ごとに形も変える。サイドバーの行と詳細ヘッダーで同じものを使う
@@ -65,15 +60,18 @@ extension ItemStatus {
             "pause.circle.fill"
 
         case .warning:
-            Self.widestSystemImage
+            Self.warningSystemImage
 
         case .unknown:
             "questionmark.circle.fill"
         }
     }
 
-    /// 状態の記号のうち、いちばん幅の広いもの。サイドバーの行で記号の枠の幅をそろえるのに使う
-    static let widestSystemImage = "exclamationmark.triangle.fill"
+    /// 要確認の記号。サイドバーの要確認の節の見出しにも使う
+    static let warningSystemImage = "exclamationmark.triangle.fill"
+
+    /// 状態の記号のうち、いちばん幅の広いもの（三角）。サイドバーの行で記号の枠の幅をそろえるのに使う
+    static let widestSystemImage = warningSystemImage
 
     var isInactive: Bool {
         if case .inactive = self {
@@ -97,20 +95,6 @@ extension ItemStatus {
 
         case .warning:
             .Status.warning
-        }
-    }
-}
-
-extension MonitoredItem {
-    /**
-     サイドバーの行と詳細ヘッダーの状態の記号。起動していないアプリは一時停止しているのではなく止まっているので、一時停止の記号を使わない。
-     launchd ジョブの無効・未ロードは、停止の操作（一時停止の絵）で休ませたものなので一時停止の記号のままにする
-     */
-    var statusSystemImage: String {
-        if case (.inactive, .monitoredApp) = (status, detail) {
-            "stop.circle.fill"
-        } else {
-            status.systemImage
         }
     }
 }

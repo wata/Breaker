@@ -17,9 +17,9 @@ struct BreakerApp: App {
         }
 
         Settings {
-            // 見本データのときは、トグルでログイン項目を登録せず、監視するアプリの選択も実際の設定に書かない
+            // 見本データのときは、トグルでログイン項目を登録せず、位置情報の許可も求めず、設定も実際の値に書かない
             if AppEnvironment.usesSampleData() {
-                SettingsView(viewModel: .init(loginItem: PreviewLoginItem(status: .enabled), defaults: .preview))
+                SettingsView(viewModel: .init(loginItem: PreviewLoginItem(status: .enabled), locationAuthorization: PreviewLocationAuthorization(status: .authorized), defaults: .preview))
             } else {
                 SettingsView(viewModel: .init(refreshItems: { [appModel = appDelegate.appModel] in
                     await appModel.refresh()
@@ -36,7 +36,7 @@ private struct MainWindow: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        ContentView(appModel: appDelegate.appModel)
+        ContentView(appModel: appDelegate.appModel, speedTestScheduler: appDelegate.speedTestScheduler)
             .onAppear {
                 appDelegate.openMainWindow = {
                     openWindow(id: BreakerApp.mainWindowID)
@@ -47,15 +47,22 @@ private struct MainWindow: View {
 
 /**
  定期チェックと通知はウインドウの有無に関係なく続けるので、ウインドウではなくアプリの起動に合わせて始める。
- そのため、ウインドウと定期チェックで共有する `AppModel` もここで持つ。Sparkle の自動アップデートも同じくアプリの起動に合わせて始める
+ そのため、ウインドウと定期チェックで共有する `AppModel` もここで持つ。Sparkle の自動アップデートも同じくアプリの起動に合わせて始める。
+ 速度計測もウインドウを閉じても続け、メインウインドウと設定のどちらからも同じ状態を見せるので、`updater` と同じくここで持つ
  */
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
-    let appModel = AppEnvironment.usesSampleData() ? AppModel.sampleData() : AppModel()
+    let appModel: AppModel
+    let speedTestScheduler: SpeedTestScheduler
     let updater = AppUpdater()
     var openMainWindow: (() -> Void)?
 
-    /// テストホストやプレビュー、見本データで起動されたときは、実際の検出・通知の許可・Dock バッジに触れない
+    override init() {
+        (appModel, speedTestScheduler) = AppEnvironment.usesSampleData() ? (.sampleData(), .sampleData()) : Self.makeLiveModels()
+        super.init()
+    }
+
+    /// テストホストやプレビュー、見本データで起動されたときは、実際の検出・速度計測・通知の許可・Dock バッジに触れない
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard
             !AppEnvironment.isIsolated(),
@@ -66,9 +73,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         let reporter = AbnormalReporter()
         UNUserNotificationCenter.current().delegate = self
         appModel.startMonitoring(reporter: reporter)
+        speedTestScheduler.start()
         Task {
             await reporter.requestAuthorization()
         }
+    }
+
+    /// 計測中の networkQuality はアプリと一緒に終わらないので、ここで止める
+    func applicationWillTerminate(_ notification: Notification) {
+        speedTestScheduler.stop()
     }
 
     /// ウインドウを閉じても常駐して定期チェックと通知を続け、Dock から再度開けるようにする
@@ -101,4 +114,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         NSApp.activate()
         openMainWindow?()
     }
+
+    /**
+     `NetworkSource` は揺れ止めの記録を、検出の Source は取り直しをまたぐ履歴を持つので、1つずつ作って持ち続ける。
+     NetworkSource は計測の状態を読み、スケジューラは最新の接続チェックを条件にして終わったら一覧を取り直すので互いを参照し合う。
+     スケジューラだけを作り終えてから入れて輪を解く
+     */
+    private static func makeLiveModels() -> (AppModel, SpeedTestScheduler) {
+        let schedulerReference = WeakReference<SpeedTestScheduler>()
+        let networkSource = NetworkSource(speedTest: { @MainActor in
+            schedulerReference.object?.snapshot ?? .idle
+        })
+        let discovery = ItemDiscovery(sources: ItemDiscovery.standardSources + [networkSource])
+        let appModel = AppModel(discover: { await discovery.items() })
+        let scheduler = SpeedTestScheduler(
+            conditions: { SpeedTestScheduler.Conditions(latestCheck: await networkSource.latestCheck()) },
+            onFinish: { [weak appModel] in
+                await appModel?.refresh()
+            }
+        )
+        schedulerReference.object = scheduler
+        return (appModel, scheduler)
+    }
+}
+
+/// 互いを参照し合う部品を、作り終えてから結ぶための入れ物
+@MainActor
+private final class WeakReference<Object: AnyObject> {
+    weak var object: Object?
 }

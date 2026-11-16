@@ -5,7 +5,7 @@ import Foundation
  取れなければ nil（利用者のメモで補う）
  */
 enum ItemDescriptionReader {
-    /// ヘッダーとメタデータは先頭にある。`~/bin` の実行ファイルがバイナリでも読み込みが重くならない上限
+    /// ヘッダーは先頭にある。`~/bin` の実行ファイルがバイナリでも読み込みが重くならない上限
     private static let maxScriptBytes = 64 * 1024
     private static let readmeName = "README.md"
     /// 起動用のラッパーだという説明は用途ではないので、プロジェクトの README に任せる
@@ -17,14 +17,10 @@ enum ItemDescriptionReader {
     }
 
     /**
-     SwiftBar のメタデータを優先し、なければシバン直後のコメントブロックの最初の1文。
-     シバンのないファイルの先頭コメントは用途の説明とは限らない（`connect.3s.sh` は PATH の説明）ので見ない
+     シバン直後のコメントブロックの最初の1文。
+     シバンのないファイルの先頭コメントは用途の説明とは限らない（PATH の設定の説明だったりする）ので見ない
      */
     static func headerDescription(ofScript script: String) -> String? {
-        if let match = script.firstMatch(of: /<(?<key>xbar|swiftbar)\.desc>(?<text>.*?)<\/\k<key>\.desc>/) {
-            let text = match.text.trimmingCharacters(in: .whitespaces)
-            return text.isEmpty ? nil : text
-        }
         let lines = trimmedLines(of: script)
         guard lines.first?.hasPrefix("#!") == true else {
             return nil
@@ -76,7 +72,6 @@ enum ItemDescriptionReader {
 }
 
 extension ItemDescriptionReader {
-    /// SwiftBar のシバンの確認でも使う
     static func prefix(ofFileAt url: URL) -> String? {
         guard let handle = try? FileHandle(forReadingFrom: url) else {
             return nil

@@ -11,11 +11,17 @@ extension ItemDetailView {
         let promptAction: ItemAction?
         let secondaryControls: [ItemAction]
         let files: [ItemAction]
+        /// ネットワーク項目のときだけ。計測は `ItemActionPerformer` ではなくスケジューラが受け持つので、操作の組とは別に渡す
+        let measure: MeasureButton.Model?
         let isLocked: Bool
         let perform: (ItemAction) -> Void
 
         var body: some ToolbarContent {
             ToolbarItemGroup {
+                if let measure {
+                    MeasureButton(model: measure)
+                }
+
                 ForEach(controls) { action in
                     Button(action.title, systemImage: action.systemImage) {
                         perform(action)
@@ -44,6 +50,49 @@ extension ItemDetailView {
                     .disabled(isLocked)
                 }
             }
+        }
+    }
+
+    /**
+     ネットワークの「今すぐ計測」。ほかの項目の「今すぐ実行」と同じくツールバーのアイコンにする。
+     計測中・オフラインでは押せず、押せない理由と通信量はツールチップで伝える。約10秒かかるので、計測中は進み具合の印に替える
+     */
+    struct MeasureButton: View {
+        struct Model {
+            let scheduler: SpeedTestScheduler
+            /// スケジューラが自動の計測を見送るのと同じ基準（揺れ止め前の接続の失敗も含む）
+            let isOnline: Bool
+        }
+
+        let model: Model
+
+        var body: some View {
+            Button {
+                Task {
+                    await model.scheduler.measureNow()
+                }
+            } label: {
+                if model.scheduler.isMeasuring {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Label("Measure Now", systemImage: "speedometer")
+                }
+            }
+            .help(help)
+            .disabled(model.scheduler.isMeasuring || !model.isOnline)
+        }
+
+        private var help: String {
+            let title = String(localized: "Measure Now", comment: "Button that runs a speed test now")
+            let detail = if model.scheduler.isMeasuring {
+                String(localized: "Measuring…", comment: "Shown while a speed test is running")
+            } else if model.isOnline {
+                String(localized: "Measures with networkQuality. Each speed test sends and receives about 300 MB.", comment: "Help tag of the Measure Now button in the network detail")
+            } else {
+                String(localized: "Connect to a network to measure.", comment: "Help tag of the Measure Now button while offline")
+            }
+            return "\(title)\n\(detail)"
         }
     }
 

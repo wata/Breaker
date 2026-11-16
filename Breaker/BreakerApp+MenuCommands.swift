@@ -10,6 +10,7 @@ extension BreakerApp {
         let updater: AppUpdater
 
         @FocusedValue(AppModel.self) private var appModel
+        @FocusedValue(SpeedTestScheduler.self) private var speedTestScheduler
 
         var body: some Commands {
             // Mac のアプリではアプリ名のメニューの「〜について」の下がアップデートの確認の定位置
@@ -21,7 +22,7 @@ extension BreakerApp {
             }
 
             CommandMenu("Item") {
-                ItemMenu(appModel: appModel)
+                ItemMenu(appModel: appModel, speedTestScheduler: speedTestScheduler)
             }
 
             CommandGroup(after: .toolbar) {
@@ -39,6 +40,7 @@ extension BreakerApp {
      */
     struct ItemMenu: View {
         let appModel: AppModel?
+        let speedTestScheduler: SpeedTestScheduler?
 
         var body: some View {
             let item = appModel?.selectedItem
@@ -52,6 +54,19 @@ extension BreakerApp {
                 ItemActionMenuItems(actions: [item?.promptAction ?? ItemAction.unavailablePromptAction]) { action in
                     request(action, on: item)
                 }
+
+                Divider()
+
+                // ツールバーを隠しても計測できるよう、詳細のツールバーと同じ条件で置く
+                Button("Measure Now") {
+                    Task {
+                        await speedTestScheduler?.measureNow()
+                    }
+                }
+                .disabled(
+                    speedTestScheduler?.isMeasuring ?? true
+                        || !(item?.networkHealth?.isOnline ?? false)
+                )
             }
             .disabled(appModel?.actingItemID != nil)
         }

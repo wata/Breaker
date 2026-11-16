@@ -108,29 +108,38 @@ extension MonitoredItem {
             ))
         ),
         sampleSourceFailure,
-        MonitoredItem(
-            key: "com.example.FeedReader",
-            name: "FeedReader",
-            status: .running,
-            detail: .monitoredApp(.init(bundleID: "com.example.FeedReader", appURL: URL(filePath: "/Applications/FeedReader.app"), isRunning: true))
-        ),
-        MonitoredItem(
-            key: "com.example.AudioPin",
-            name: "AudioPin",
-            status: .warning(reason: String(localized: "Running from outside /Applications"), note: "/Users/me/Developer/AudioPin/build/Release/AudioPin.app"),
-            detail: .monitoredApp(.init(
-                bundleID: "com.example.AudioPin",
-                appURL: URL(filePath: "/Users/me/Developer/AudioPin/build/Release/AudioPin.app"),
-                isRunning: true
-            ))
-        ),
-        MonitoredItem(
-            key: "com.example.ClipboardKeeper",
-            name: "ClipboardKeeper",
-            status: .inactive(reason: String(localized: "Not running", comment: "Reason shown for a monitored app that isn't running")),
-            detail: .monitoredApp(.init(bundleID: "com.example.ClipboardKeeper", appURL: URL(filePath: "/Applications/ClipboardKeeper.app"), isRunning: false))
-        ),
+        sampleNetwork,
     ]
+
+    /// Wi-Fi で、どのチェックも正常なネットワーク。判定は実際の判定表に通して決める
+    static let sampleNetwork: MonitoredItem = {
+        let health = NetworkHealth(
+            pathStatus: .satisfied,
+            interface: .wifi,
+            isExpensive: false,
+            isConstrained: false,
+            routerAddress: "192.168.1.1",
+            dnsServers: ["192.168.1.1"],
+            routerPing: .init(destination: "192.168.1.1", receivedCount: 10, lossRate: 0, averageMilliseconds: 3.4),
+            internetPing: .init(destination: NetworkSource.internetPingDestination, receivedCount: 10, lossRate: 0, averageMilliseconds: 12.8),
+            dnsLookup: .resolved(milliseconds: 18),
+            internetAccess: .reachable,
+            wifi: .init(
+                interfaceName: "en0",
+                ssid: "Example Wi-Fi",
+                rssi: -52,
+                noise: -94,
+                channelNumber: 36,
+                band: .fiveGigahertz,
+                channelWidth: 80,
+                phyMode: "802.11ax",
+                transmitRate: 864
+            ),
+            lastSpeedTest: SpeedTestRecord.sample,
+            isTestingSpeed: false
+        )
+        return MonitoredItem(key: "health", name: Kind.network.title, status: NetworkCheck.status(of: health), detail: .network(health))
+    }()
 
     private static let sampleCronSchedule = Schedule(calendarEntries: (1...5).map { .init(minute: 30, hour: 7, weekday: $0) })
 
@@ -220,17 +229,9 @@ extension MonitoredItem {
         return MonitoredItem(key: "/\(job.origin.relativePath)/\(job.label)", name: job.label, status: .ok, detail: .launchdJob(job))
     }
 
-    /// 一覧では検出失敗と並べられないので、SwiftBar プラグインの詳細は別に用意する
-    static let sampleSwiftBarPlugin = MonitoredItem(
-        key: "/Users/me/SwiftBar/battery.5m.sh",
-        name: "battery.5m.sh",
-        status: .ok,
-        detail: .swiftBarPlugin(.init(fileURL: URL(filePath: "/Users/me/SwiftBar/battery.5m.sh"), refreshInterval: 300))
-    )
-
     static let sampleSourceFailure = ItemDiscovery.sourceFailure(
-        of: .swiftBarPlugin,
-        message: SwiftBarError(message: "Domain com.ameba.SwiftBar does not exist").localizedDescription
+        of: .folderAction,
+        message: "Not authorized to send Apple events to System Events. (-1743)"
     )
 
     static let sampleLogText = ((1...200).map { "2026-10-29 09:00:\(String(format: "%02d", $0 % 60)) [daily-sales-report] step \($0) done" }
@@ -352,6 +353,39 @@ extension AppModel {
     }
 }
 
+extension SpeedTestRecord {
+    static let sample = SpeedTestRecord(
+        date: .now.addingTimeInterval(-20 * 60),
+        outcome: .succeeded(.init(
+            downloadBitsPerSecond: 146_000_000,
+            uploadBitsPerSecond: 132_000_000,
+            responsiveness: 1027,
+            baseRoundTripMilliseconds: 14
+        ))
+    )
+}
+
+extension SpeedTestScheduler {
+    /// 見本データとプレビュー用。networkQuality を走らせず（約300MB 通信する）、前回の結果に見本の値を出す
+    static func sampleData() -> SpeedTestScheduler {
+        let defaults = UserDefaults.preview
+        defaults.set(try? JSONEncoder().encode(SpeedTestRecord.sample), forKey: lastRecordKey)
+        defaults.set(try? JSONEncoder().encode(SpeedTestRecord.sampleHistory), forKey: historyKey)
+        return SpeedTestScheduler(
+            speedTester: PreviewSpeedTester(),
+            conditions: { .init(latestCheck: nil) },
+            defaults: defaults
+        )
+    }
+}
+
+/// 押しても測らず、見本の値を今の時刻で返す
+private struct PreviewSpeedTester: SpeedTesting {
+    func measure() async throws -> SpeedTestRecord {
+        SpeedTestRecord(date: .now, outcome: SpeedTestRecord.sample.outcome)
+    }
+}
+
 extension UserDefaults {
     /// 起動のたびに空から始めるので、前回のプレビューで書いたメモは残らない
     static var preview: UserDefaults {
@@ -371,7 +405,7 @@ extension ItemActionPerformer {
 }
 
 private struct PreviewShell: ShellRunning {
-    func run(_ executable: String, arguments: [String]) async throws -> ShellOutput {
+    func run(_ executable: String, arguments: [String], timeout: Duration?) async throws -> ShellOutput {
         ShellOutput(status: 0, stdout: "", stderr: "")
     }
 }
@@ -384,8 +418,6 @@ private struct PreviewWorkspace: WorkspaceOpening {
     func activateFileViewerSelecting(_ fileURLs: [URL]) {}
 
     func openAsText(_ url: URL) async throws {}
-
-    func openApplication(at url: URL) async throws {}
 }
 
 /// プレビューのトグルで実際にログイン項目へ登録しない。押すと状態だけ切り替わる
@@ -406,4 +438,97 @@ final class PreviewLoginItem: LoginItemManaging {
     }
 
     func openSystemSettings() {}
+}
+
+/// プレビューのボタンで実際に位置情報の許可を求めない。押すと許可されたことにする
+@MainActor
+final class PreviewLocationAuthorization: LocationAuthorizing {
+    private(set) var status: LocationAuthorizationStatus
+
+    init(status: LocationAuthorizationStatus) {
+        self.status = status
+    }
+
+    func requestAuthorization() async -> LocationAuthorizationStatus {
+        status = .authorized
+        return status
+    }
+
+    func openSystemSettings() {}
+}
+
+extension MonitoredItem {
+    /// 外部へのロスと弱い電波がある Wi-Fi。ルーターは ping に応答しないが、インターネットには届いている
+    static let sampleNetworkWarning: MonitoredItem = {
+        let health = NetworkHealth(
+            pathStatus: .satisfied,
+            interface: .wifi,
+            isExpensive: false,
+            isConstrained: false,
+            routerAddress: "192.168.1.1",
+            dnsServers: ["192.168.1.1", "1.1.1.1"],
+            routerPing: .init(destination: "192.168.1.1", receivedCount: 0, lossRate: 1, averageMilliseconds: nil),
+            internetPing: .init(destination: NetworkSource.internetPingDestination, receivedCount: 8, lossRate: 0.2, averageMilliseconds: 48.6),
+            dnsLookup: .resolved(milliseconds: 24),
+            internetAccess: .reachable,
+            wifi: .init(
+                interfaceName: "en0",
+                ssid: nil,
+                rssi: -78,
+                noise: -92,
+                channelNumber: 6,
+                band: .twoPointFourGigahertz,
+                channelWidth: 20,
+                phyMode: "802.11n",
+                transmitRate: 72
+            ),
+            lastSpeedTest: SpeedTestRecord.sample,
+            isTestingSpeed: false
+        )
+        return MonitoredItem(key: "health", name: Kind.network.title, status: NetworkCheck.status(of: health), detail: .network(health))
+    }()
+
+    /// どのインターフェイスも使えない。経路が無いので ping・DNS・到達確認・Wi-Fi は測っていない
+    static let sampleNetworkOffline: MonitoredItem = {
+        let health = NetworkHealth(
+            pathStatus: .unsatisfied,
+            interface: .none,
+            isExpensive: false,
+            isConstrained: false,
+            routerAddress: nil,
+            dnsServers: [],
+            routerPing: nil,
+            internetPing: nil,
+            dnsLookup: nil,
+            internetAccess: nil,
+            wifi: nil,
+            lastSpeedTest: SpeedTestRecord.sample,
+            isTestingSpeed: false
+        )
+        return MonitoredItem(key: "health", name: Kind.network.title, status: NetworkCheck.status(of: health), detail: .network(health))
+    }()
+}
+
+extension SpeedTestRecord {
+    /**
+     速度の推移のグラフの見本。直近7日を3時間ごとに測ったことにし、線の形が読み取れるよう上下する波を付ける。
+     最後は `sample` と同じ値にして、大きな数字とグラフの右端をそろえる
+     */
+    static let sampleHistory: [SpeedTestRecord] = {
+        let interval: TimeInterval = 3 * 60 * 60
+        let count = 7 * 24 / 3
+        let earlier = (1..<count).reversed().map { index in
+            let wave = sin(Double(index) * .pi / 4)
+            return SpeedTestRecord(
+                date: sample.date.addingTimeInterval(-Double(index) * interval),
+                outcome: .succeeded(.init(
+                    downloadBitsPerSecond: (130 + 30 * wave) * 1_000_000,
+                    uploadBitsPerSecond: (110 + 20 * wave) * 1_000_000,
+                    responsiveness: 1000,
+                    baseRoundTripMilliseconds: 14
+                ))
+            )
+        }
+        return earlier + [sample]
+    }()
 }

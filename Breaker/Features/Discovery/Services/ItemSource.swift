@@ -1,29 +1,9 @@
-import AppKit
+import Foundation
 
 /// 監視対象を種類ごとに検出する。`ItemDiscovery` が全種類をまとめて呼ぶ
 protocol ItemSource: Sendable {
     var kind: MonitoredItem.Kind { get }
     func items() async throws -> [MonitoredItem]
-}
-
-/// 起動中アプリのうち、検出に使う情報だけを取り出したもの
-struct RunningApp: Hashable, Sendable {
-    let bundleID: String
-    let bundleURL: URL?
-    let name: String?
-}
-
-extension RunningApp {
-    /// テストで起動中アプリを差し替えられるよう、各 Source はこの形のクロージャで受け取る
-    typealias Provider = @Sendable () async -> [RunningApp]
-
-    static let systemProvider: Provider = {
-        await MainActor.run {
-            NSWorkspace.shared.runningApplications.compactMap { app in
-                app.bundleIdentifier.map { RunningApp(bundleID: $0, bundleURL: app.bundleURL, name: app.localizedName) }
-            }
-        }
-    }
 }
 
 extension String {

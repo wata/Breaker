@@ -14,6 +14,12 @@ extension Color {
         static let inactive = Color(nsColor: .tertiaryLabelColor)
     }
 
+    /// 速度の下り・上り。大きな数字の矢印とグラフの線で同じ色にして対応を示す。状態の色（緑・橙・赤）と取り違えない色にする
+    enum Speed {
+        static let download = Color.blue
+        static let upload = Color.purple
+    }
+
     /// 一度だけの設定の案内（ログイン項目の許可待ち）に添える記号。異常の色（`Status`）と競わないよう、橙ではなく黄にする
     static let caution = Color.yellow
 
@@ -21,9 +27,8 @@ extension Color {
     static let logErrorLine = Status.failure.opacity(0.18)
 }
 
-
-/// 色そのものではなく、見つからない・使えないものを薄く見せる度合い
+/// 色そのものではなく、今の状態を表さない値を退かせる度合い
 enum Opacity {
-    /// 設定の、見つからないアプリの汎用アイコン
-    static let dimmed = 0.4
+    /// ネットワークが異常なときの前回の速度の推移。原因（経路図・ヘッダー）より先に目に入らないようにする
+    static let stale = 0.4
 }

@@ -48,80 +48,88 @@ struct SettingsViewModelTests {
         #expect(viewModel.loginItemStatus == .enabled)
     }
 
-    /// 選んだ順に並べ、見つからないアプリは Bundle ID のまま出す
-    @Test func loadsSelectedMonitoredApps() throws {
-        let defaults = try IsolatedDefaults()
-        defaults.userDefaults.set(["com.example.b", "com.example.missing"], forKey: MonitoredAppSource.bundleIDsKey)
-        let viewModel = SettingsView.ViewModel(
-            loginItem: StubLoginItem(status: .disabled),
-            defaults: defaults.userDefaults,
-            locateApp: { $0 == "com.example.b" ? URL(filePath: "/Applications/B.app") : nil }
-        )
-        #expect(viewModel.monitoredApps.map(\.bundleID) == ["com.example.b", "com.example.missing"])
-        #expect(viewModel.monitoredApps.map(\.appURL) == [URL(filePath: "/Applications/B.app"), nil])
-        #expect(viewModel.monitoredApps.last?.name == "com.example.missing")
-    }
-
-    @Test func monitoredAppsAreEmptyByDefault() throws {
+    @Test func speedTestIntervalDefaultsToEveryHour() throws {
         let defaults = try IsolatedDefaults()
         let viewModel = SettingsView.ViewModel(loginItem: StubLoginItem(status: .disabled), defaults: defaults.userDefaults)
-        #expect(viewModel.monitoredApps.isEmpty)
+
+        #expect(viewModel.speedTestInterval == .oneHour)
     }
 
-    /// 選択済み・自分自身・Bundle ID の読めないものは足さない。足したら保存して一覧を取り直す
-    @Test func addingMonitoredAppsSavesAndRefreshes() async throws {
+    /// scheduler が読むのと同じ場所に書く
+    @Test func choosingSpeedTestIntervalSavesIt() throws {
         let defaults = try IsolatedDefaults()
-        let directory = try TemporaryDirectory()
-        let ownBundleID = try #require(MonitoredAppSource.ownBundleID)
-        let example = try makeApp(directory.url.appending(path: "Example.app"), bundleID: "com.example.app")
-        let other = try makeApp(directory.url.appending(path: "Other.app"), bundleID: "com.example.other")
-        let own = try makeApp(directory.url.appending(path: "Breaker.app"), bundleID: ownBundleID)
-        let broken = directory.url.appending(path: "Broken.app")
+        let viewModel = SettingsView.ViewModel(loginItem: StubLoginItem(status: .disabled), defaults: defaults.userDefaults)
+
+        viewModel.speedTestInterval = .manual
+
+        #expect(SpeedTestInterval.selected(in: defaults.userDefaults) == .manual)
+        let reopened = SettingsView.ViewModel(loginItem: StubLoginItem(status: .disabled), defaults: defaults.userDefaults)
+        #expect(reopened.speedTestInterval == .manual)
+    }
+
+    /// 前の版で保存した、今は無い値が入っていても既定に戻す
+    @Test func unknownSpeedTestIntervalFallsBackToDefault() throws {
+        let defaults = try IsolatedDefaults()
+        defaults.userDefaults.set("fiveMinutes", forKey: SpeedTestInterval.key)
+        let viewModel = SettingsView.ViewModel(loginItem: StubLoginItem(status: .disabled), defaults: defaults.userDefaults)
+
+        #expect(viewModel.speedTestInterval == SpeedTestInterval.defaultValue)
+    }
+
+    @Test func everySpeedTestIntervalHasTitle() {
+        for interval in SpeedTestInterval.allCases {
+            #expect(!interval.title.isEmpty)
+        }
+    }
+
+    /// オンにしたときだけ許可を求め、次の定期チェックを待たずに一覧を取り直す
+    @Test func turningOnNetworkNameAsksForLocationAndRefreshes() async throws {
+        let defaults = try IsolatedDefaults()
+        let location = StubLocationAuthorization(status: .notDetermined, answer: .authorized)
         var refreshCount = 0
         let viewModel = SettingsView.ViewModel(
-            loginItem: StubLoginItem(status: .disabled),
+            loginItem: StubLoginItem(status: .enabled),
+            locationAuthorization: location,
             defaults: defaults.userDefaults,
-            locateApp: { _ in nil },
             refreshItems: { refreshCount += 1 }
         )
+        #expect(!viewModel.showsNetworkName)
 
-        await viewModel.addMonitoredApps(at: [other, own, broken, example, other])
+        await viewModel.setShowsNetworkName(true)
 
-        #expect(viewModel.monitoredApps.map(\.bundleID) == ["com.example.other", "com.example.app"])
-        #expect(viewModel.monitoredApps.map(\.appURL) == [other, example])
-        #expect(MonitoredAppSource.selectedBundleIDs(in: defaults.userDefaults) == ["com.example.other", "com.example.app"])
-        #expect(refreshCount == 1)
-
-        // 何も増えなければ保存も取り直しもしない
-        await viewModel.addMonitoredApps(at: [example, own])
-        #expect(viewModel.monitoredApps.count == 2)
+        #expect(viewModel.showsNetworkName)
+        #expect(defaults.userDefaults.bool(forKey: WiFiReader.showsNetworkNameKey))
+        #expect(viewModel.locationStatus == .authorized)
+        #expect(location.requestCount == 1)
         #expect(refreshCount == 1)
     }
 
-    @Test func removingMonitoredAppSavesAndRefreshes() async throws {
+    /// 拒否されてもオンのまま残す（システム設定で許可すれば名前が出る）。オフにするときは尋ねない
+    @Test func deniedLocationKeepsToggleAndTurningOffDoesNotAsk() async throws {
         let defaults = try IsolatedDefaults()
-        defaults.userDefaults.set(["com.example.a", "com.example.b"], forKey: MonitoredAppSource.bundleIDsKey)
-        var refreshCount = 0
-        let viewModel = SettingsView.ViewModel(
-            loginItem: StubLoginItem(status: .disabled),
-            defaults: defaults.userDefaults,
-            locateApp: { _ in nil },
-            refreshItems: { refreshCount += 1 }
-        )
+        let location = StubLocationAuthorization(status: .notDetermined, answer: .denied)
+        let viewModel = SettingsView.ViewModel(loginItem: StubLoginItem(status: .enabled), locationAuthorization: location, defaults: defaults.userDefaults)
 
-        await viewModel.removeMonitoredApp(try #require(viewModel.monitoredApps.first))
+        await viewModel.setShowsNetworkName(true)
+        #expect(viewModel.showsNetworkName)
+        #expect(viewModel.locationStatus == .denied)
 
-        #expect(viewModel.monitoredApps.map(\.bundleID) == ["com.example.b"])
-        #expect(MonitoredAppSource.selectedBundleIDs(in: defaults.userDefaults) == ["com.example.b"])
-        #expect(refreshCount == 1)
+        await viewModel.setShowsNetworkName(false)
+        #expect(!defaults.userDefaults.bool(forKey: WiFiReader.showsNetworkNameKey))
+        #expect(location.requestCount == 1)
     }
 
-    private func makeApp(_ url: URL, bundleID: String) throws -> URL {
-        let infoURL = url.appending(path: "Contents/Info.plist")
-        try FileManager.default.createDirectory(at: infoURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try PropertyListSerialization.data(fromPropertyList: ["CFBundleIdentifier": bundleID], format: .xml, options: 0).write(to: infoURL)
-        return url
+    /// システム設定で許可を変えても知らせは来ないので、アプリに戻ったときの読み直しで追従する
+    @Test func reloadingPicksUpLocationChangedInSystemSettings() {
+        let location = StubLocationAuthorization(status: .denied, answer: .denied)
+        let viewModel = SettingsView.ViewModel(loginItem: StubLoginItem(status: .enabled), locationAuthorization: location, defaults: .preview)
+
+        location.status = .authorized
+        viewModel.reloadStatus()
+
+        #expect(viewModel.locationStatus == .authorized)
     }
+
 }
 
 /// 実際の `SMAppService` には触れず、呼ばれた操作だけを記録する
@@ -157,4 +165,27 @@ private final class StubLoginItem: LoginItemManaging {
     func openSystemSettings() {
         calls.append("openSystemSettings")
     }
+}
+
+
+/// 実際の `CLLocationManager` には触れず、尋ねられたら決めておいた答えを返す
+@MainActor
+private final class StubLocationAuthorization: LocationAuthorizing {
+    var status: LocationAuthorizationStatus
+    private let answer: LocationAuthorizationStatus
+
+    init(status: LocationAuthorizationStatus, answer: LocationAuthorizationStatus) {
+        self.status = status
+        self.answer = answer
+    }
+
+    private(set) var requestCount = 0
+
+    func requestAuthorization() async -> LocationAuthorizationStatus {
+        requestCount += 1
+        status = answer
+        return answer
+    }
+
+    func openSystemSettings() {}
 }

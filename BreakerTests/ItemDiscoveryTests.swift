@@ -5,16 +5,16 @@ import Testing
 struct ItemDiscoveryTests {
     @Test func sortsByKindThenNameAndKeepsOtherSourcesOnFailure() async {
         let discovery = ItemDiscovery(sources: [
-            StubSource(kind: .monitoredApp, result: .success([app("b"), app("A")])),
-            StubSource(kind: .folderAction, result: .failure(FolderActionError(status: 1, message: "-1743"))),
+            StubSource(kind: .folderAction, result: .success([folder("b"), folder("A")])),
+            StubSource(kind: .cronJob, result: .failure(FolderActionError(status: 1, message: "-1743"))),
             StubSource(kind: .launchdJob, result: .success([job("z.job"), job("a.job")])),
         ])
         let items = await discovery.items()
-        #expect(items.map(\.name) == ["a.job", "z.job", "Can't Get Folder Actions", "A", "b"])
+        #expect(items.map(\.name) == ["a.job", "z.job", "Can't Get cron Jobs", "A", "b"])
 
         let failure = items[2]
-        #expect(failure.kind == .folderAction)
-        #expect(failure.detail == .sourceFailure(.folderAction))
+        #expect(failure.kind == .cronJob)
+        #expect(failure.detail == .sourceFailure(.cronJob))
         #expect(failure.status.isAbnormal)
         // サイドバーの行には短い理由だけを出し、エラー文は補足に回す
         #expect(failure.status.reason == "Check failed")
@@ -34,16 +34,21 @@ struct ItemDiscoveryTests {
             job("fail-b", status: .failed(reason: "Exit code 1")),
             job("unknown", status: .unknown(reason: "x")),
             job("fail-a", status: HealthCheck.logErrorStatus("Error: boom")),
-            app("app-ok"),
+            folder("folder-ok"),
         ]
-        let expected = ["fail-a", "fail-b", "warn", "ok-a", "ok-b", "stopped", "unknown", "app-ok"]
+        let expected = ["fail-a", "fail-b", "warn", "ok-a", "ok-b", "stopped", "unknown", "folder-ok"]
         #expect(ItemDiscovery.sorted(items).map(\.name) == expected)
         #expect(ItemDiscovery.sorted(items.reversed()).map(\.name) == expected)
         let discovery = ItemDiscovery(sources: [
-            StubSource(kind: .monitoredApp, result: .success([app("app-ok")])),
+            StubSource(kind: .folderAction, result: .success([folder("folder-ok")])),
             StubSource(kind: .launchdJob, result: .success(Array(items.dropLast().shuffled()))),
         ])
         #expect(await discovery.items().map(\.name) == expected)
+    }
+
+    /// ネットワークは速度計測と結んで AppDelegate が足すので、テストやプレビューの `ItemDiscovery()` は ping や NWPathMonitor を走らせない
+    @Test func standardSourcesExcludeNetwork() {
+        #expect(!ItemDiscovery.standardSources.contains { $0.kind == .network })
     }
 
     /// 実機の検出結果を目で確かめる用。`TEST_RUNNER_BREAKER_LIVE=1 xcodebuild test ...` のときだけ動く
@@ -55,12 +60,12 @@ struct ItemDiscoveryTests {
         #expect(!items.isEmpty)
     }
 
-    private func app(_ name: String) -> MonitoredItem {
+    private func folder(_ name: String) -> MonitoredItem {
         MonitoredItem(
             key: name,
             name: name,
-            status: .running,
-            detail: .monitoredApp(.init(bundleID: "com.example.\(name)", appURL: URL(filePath: "/Applications/\(name).app"), isRunning: true))
+            status: .ok,
+            detail: .folderAction(.init(folderURL: URL(filePath: "/tmp/\(name)", directoryHint: .isDirectory), scriptNames: [], isEnabled: true))
         )
     }
 

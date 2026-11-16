@@ -18,6 +18,14 @@ enum Layout {
     static let numberFieldWidth: CGFloat = 44
     /// 設定ウインドウ。ログイン項目の説明文が2行ほどに収まる幅
     static let settingsWidth: CGFloat = 460
-    /// 設定の監視するアプリの一覧に並べるアプリのアイコン。システム設定の同じような一覧に合わせる
-    static let appIconSize: CGFloat = 20
+    /// ネットワークの経路図のつなぎ目の線の太さ。状態の色が読み取れ、記号より目立たない太さ
+    static let routeLineWidth: CGFloat = 2
+    /// 届いていない・測っていないつなぎ目の破線。色だけに頼らず、切れていることを形でも見せる
+    static let routeLineDash: [CGFloat] = [3, 3]
+    /// 速度の推移のグラフ。7日分の上下が読み取れ、詳細の他の節を押し出しすぎない高さ
+    static let speedChartHeight: CGFloat = 160
+    /// 速度の推移のグラフの線。経路図の線と同じく、色と形が読み取れる細さ
+    static let chartLineWidth: CGFloat = 2
+    /// 上りの線の破線。色だけに頼らず下りと見分けられるようにする
+    static let chartLineDash: [CGFloat] = [3, 3]
 }

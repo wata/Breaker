@@ -85,6 +85,17 @@
         }
       }
     },
+    "%@ didn't finish in time" : {
+      "comment" : "Error when an external command was stopped because it took too long. The placeholder is the command path",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ が時間内に終わりませんでした"
+          }
+        }
+      }
+    },
     "%@ in %@" : {
       "localizations" : {
         "en" : {
@@ -97,6 +108,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%2$@の%1$@"
+          }
+        }
+      }
+    },
+    "%@ loss" : {
+      "comment" : "Packet loss rate of pings, e.g. 0% loss",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ロス %@"
           }
         }
       }
@@ -229,39 +251,6 @@
         }
       }
     },
-    "Add" : {
-      "comment" : "Button in the open panel that adds the chosen apps",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "追加"
-          }
-        }
-      }
-    },
-    "Add App…" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add App…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリを追加…"
-          }
-        }
-      }
-    },
     "Add at least one time." : {
       "localizations" : {
         "en" : {
@@ -278,18 +267,13 @@
         }
       }
     },
-    "Add Description" : {
+    "Add Description (e.g. Backs up photos to the NAS every night)" : {
+      "comment" : "Placeholder of the description of an item in the detail header. The example shows what to write",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add Description"
-          }
-        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "説明を追加"
+            "value" : "説明を追加（例: 毎晩、写真を NAS にバックアップ）"
           }
         }
       }
@@ -344,23 +328,6 @@
         }
       }
     },
-    "App" : {
-      "comment" : "A monitored app: the section title in the detail pane, and the kind shown before the reason in the sidebar's Needs Attention section",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリ"
-          }
-        }
-      }
-    },
     "Approve Breaker in Login Items to open it at login." : {
       "localizations" : {
         "en" : {
@@ -373,23 +340,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ログイン時に開くには、ログイン項目で Breaker を許可してください。"
-          }
-        }
-      }
-    },
-    "Apps" : {
-      "comment" : "Sidebar section title for monitored apps",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apps"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリ"
           }
         }
       }
@@ -472,38 +422,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ウインドウを閉じても動き続け、異常があれば通知します。"
-          }
-        }
-      }
-    },
-    "Breaker shows in the sidebar whether these apps are running. You won't be notified when one quits." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Breaker shows in the sidebar whether these apps are running. You won't be notified when one quits."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "起動しているかをサイドバーに表示します。終了しても通知はしません。"
-          }
-        }
-      }
-    },
-    "Bundle ID" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bundle ID"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bundle ID"
           }
         }
       }
@@ -605,6 +523,23 @@
         }
       }
     },
+    "Can't reach the internet" : {
+      "comment" : "Reason of the network item when the router answers but nothing on the internet does",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Can't reach the internet"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インターネットに接続できません"
+          }
+        }
+      }
+    },
     "Can't read status" : {
       "localizations" : {
         "en" : {
@@ -653,6 +588,28 @@
         }
       }
     },
+    "Cellular" : {
+      "comment" : "Network interface type: cellular (such as iPhone tethering over a cellular network)",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モバイル通信"
+          }
+        }
+      }
+    },
+    "Channel" : {
+      "comment" : "Row label in the network detail: Wi-Fi channel",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "チャンネル"
+          }
+        }
+      }
+    },
     "Check failed" : {
       "comment" : "Reason of the item shown when a whole kind of item couldn't be discovered. The error message is shown separately",
       "localizations" : {
@@ -687,18 +644,13 @@
         }
       }
     },
-    "Choose apps in /Applications to add" : {
+    "Checking connection…" : {
+      "comment" : "Reason of the network item when a connection check failed once and is being confirmed. The tentative cause is shown separately",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose apps in /Applications to add"
-          }
-        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "/Applications からアプリを選んで追加"
+            "value" : "接続を確認中…"
           }
         }
       }
@@ -748,6 +700,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "コマンド"
+          }
+        }
+      }
+    },
+    "Connect to a network to measure." : {
+      "comment" : "Help tag of the Measure Now button while offline",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "計測するにはネットワークに接続してください。"
+          }
+        }
+      }
+    },
+    "Connected" : {
+      "comment" : "Network path status: a network interface is usable",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続済み"
+          }
+        }
+      }
+    },
+    "Connection" : {
+      "comment" : "Section title in the network detail: network path, router, DNS and internet access",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続"
+          }
+        }
+      }
+    },
+    "Connects on demand" : {
+      "comment" : "Network path status: the network (such as an on-demand VPN) connects when used",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "必要時に接続"
           }
         }
       }
@@ -802,22 +798,6 @@
         }
       }
     },
-    "Couldn't get the SwiftBar plugin folder: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't get the SwiftBar plugin folder: %@"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SwiftBar のプラグインフォルダを取得できませんでした: %@"
-          }
-        }
-      }
-    },
     "Couldn't open %@" : {
       "localizations" : {
         "en" : {
@@ -862,6 +842,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "crontab を読めませんでした（終了コード %1$d）: %2$@"
+          }
+        }
+      }
+    },
+    "Couldn't read the output of networkQuality" : {
+      "comment" : "Reason of a failed speed test",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "networkQuality の出力を読めませんでした"
           }
         }
       }
@@ -945,6 +936,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "毎日"
+          }
+        }
+      }
+    },
+    "Date" : {
+      "comment" : "Accessibility label of the time axis of the speed history chart",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日時"
           }
         }
       }
@@ -1049,6 +1051,17 @@
         }
       }
     },
+    "Direction" : {
+      "comment" : "Accessibility label of the series of the speed history chart: download or upload",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向き"
+          }
+        }
+      }
+    },
     "Disabled" : {
       "comment" : "Status of a launchd job or folder action that is turned off",
       "localizations" : {
@@ -1066,6 +1079,45 @@
         }
       }
     },
+    "DNS Lookup" : {
+      "comment" : "Row label in the network detail: how long resolving a name took, or why it failed",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名前解決"
+          }
+        }
+      }
+    },
+    "DNS not responding" : {
+      "comment" : "Reason of the network item when name lookups fail although the internet answers pings",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DNS not responding"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DNS が応答しません"
+          }
+        }
+      }
+    },
+    "DNS Servers" : {
+      "comment" : "Row label in the network detail",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DNS サーバー"
+          }
+        }
+      }
+    },
     "Doesn't run at specific times or intervals" : {
       "localizations" : {
         "en" : {
@@ -1078,6 +1130,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "時刻指定・間隔では起動しません"
+          }
+        }
+      }
+    },
+    "Download" : {
+      "comment" : "Row label in the network detail: download speed",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下り"
+          }
+        }
+      }
+    },
+    "Each speed test sends and receives about 300 MB. Breaker doesn't run speed tests automatically over a personal hotspot or in Low Data Mode." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "速度の計測は1回で約300MB を送受信します。インターネット共有（テザリング）中と省データモードでは自動で計測しません。"
           }
         }
       }
@@ -1267,6 +1340,17 @@
         }
       }
     },
+    "Ethernet" : {
+      "comment" : "Network interface type: wired Ethernet",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ethernet"
+          }
+        }
+      }
+    },
     "Every %lld days" : {
       "localizations" : {
         "en" : {
@@ -1379,6 +1463,50 @@
         }
       }
     },
+    "Every 3 Hours" : {
+      "comment" : "Choice of how often to measure internet speed automatically",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3時間ごと"
+          }
+        }
+      }
+    },
+    "Every 6 Hours" : {
+      "comment" : "Choice of how often to measure internet speed automatically",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "6時間ごと"
+          }
+        }
+      }
+    },
+    "Every 15 Minutes" : {
+      "comment" : "Choice of how often to measure internet speed automatically",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "15分ごと"
+          }
+        }
+      }
+    },
+    "Every 30 Minutes" : {
+      "comment" : "Choice of how often to measure internet speed automatically",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30分ごと"
+          }
+        }
+      }
+    },
     "Every day" : {
       "comment" : "Schedule that runs daily",
       "localizations" : {
@@ -1397,7 +1525,7 @@
       }
     },
     "Every Hour" : {
-      "comment" : "Hour option in the schedule editor that runs every hour at the chosen minute",
+      "comment" : "Choice of how often to measure internet speed automatically",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1490,23 +1618,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "失敗"
-          }
-        }
-      }
-    },
-    "File" : {
-      "comment" : "Row title for the file path of a SwiftBar plugin",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "File"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ファイル"
           }
         }
       }
@@ -1694,6 +1805,23 @@
         }
       }
     },
+    "High latency" : {
+      "comment" : "Reason of the network item when pings to the internet take long",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "High latency"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "遅延が大きくなっています"
+          }
+        }
+      }
+    },
     "Home" : {
       "comment" : "Filter option: launchd jobs that run your scripts in your home folder",
       "localizations" : {
@@ -1775,6 +1903,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "時間ごと"
+          }
+        }
+      }
+    },
+    "Internet" : {
+      "comment" : "Row label in the network detail: whether a page on the internet could be loaded, and the internet stage of the network route diagram",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インターネット"
+          }
+        }
+      }
+    },
+    "Internet (%@)" : {
+      "comment" : "Row label in the network detail: ping to a server on the internet, e.g. Internet (1.1.1.1)",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インターネット（%@）"
           }
         }
       }
@@ -1896,6 +2046,17 @@
         }
       }
     },
+    "Last Test" : {
+      "comment" : "Row label in the network detail: result of the last speed test",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前回の計測"
+          }
+        }
+      }
+    },
     "Last: %@" : {
       "localizations" : {
         "en" : {
@@ -1912,19 +2073,13 @@
         }
       }
     },
-    "Launch" : {
-      "comment" : "Action that opens a monitored app that isn't running",
+    "Latency %@" : {
+      "comment" : "Sidebar: average ping time to the internet after the download speed, e.g. Latency 13 ms",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Launch"
-          }
-        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "起動"
+            "value" : "遅延 %@"
           }
         }
       }
@@ -1993,19 +2148,13 @@
         }
       }
     },
-    "Location" : {
-      "comment" : "Row title for where a monitored app is installed",
+    "Location Services is off for Breaker" : {
+      "comment" : "Settings: subtitle of the Wi-Fi network name row after Location Services permission was denied",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Location"
-          }
-        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "場所"
+            "value" : "Breaker の位置情報サービスがオフです"
           }
         }
       }
@@ -2039,6 +2188,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ログのフォルダがありません"
+          }
+        }
+      }
+    },
+    "Lookup failed" : {
+      "comment" : "DNS lookup result when the name couldn't be resolved. The reason is shown separately",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名前解決できませんでした"
+          }
+        }
+      }
+    },
+    "Manually" : {
+      "comment" : "Choice of how often to measure internet speed: never automatically, only when the user asks",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手動"
+          }
+        }
+      }
+    },
+    "Measure Now" : {
+      "comment" : "Button that runs a speed test now",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今すぐ計測"
+          }
+        }
+      }
+    },
+    "Measured" : {
+      "comment" : "Row label in the network detail: when the speed was measured",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "計測日時"
+          }
+        }
+      }
+    },
+    "Measures with networkQuality. Each speed test sends and receives about 300 MB." : {
+      "comment" : "Help tag of the Measure Now button in the network detail",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "networkQuality で計測します。1回で約300MB を送受信します。"
+          }
+        }
+      }
+    },
+    "Measuring…" : {
+      "comment" : "Shown while a speed test is running",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "計測中…"
           }
         }
       }
@@ -2128,22 +2343,6 @@
         }
       }
     },
-    "Monitored Apps" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Monitored Apps"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "監視するアプリ"
-          }
-        }
-      }
-    },
     "Monthly" : {
       "comment" : "Repeat option in the schedule editor",
       "localizations" : {
@@ -2211,6 +2410,67 @@
         }
       }
     },
+    "Network" : {
+      "comment" : "The network health check: the sidebar section title, and the kind shown before the reason in the sidebar's Needs Attention section",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ネットワーク"
+          }
+        }
+      }
+    },
+    "Network Name" : {
+      "comment" : "Row label in the network detail: SSID of the Wi-Fi network",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ネットワーク名"
+          }
+        }
+      }
+    },
+    "networkQuality didn't finish within %lld seconds" : {
+      "comment" : "Reason of a failed speed test that was stopped because it took too long",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "networkQuality が %lld 秒以内に終わりませんでした"
+          }
+        }
+      }
+    },
+    "networkQuality failed with exit code %d" : {
+      "comment" : "Reason of a failed speed test",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "networkQuality が終了コード %d で失敗しました"
+          }
+        }
+      }
+    },
+    "networkQuality failed with exit code %d: %@" : {
+      "comment" : "Reason of a failed speed test. The last part is the error message of the command",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "networkQuality が終了コード %d で失敗しました: %@"
+          }
+        }
+      }
+    },
     "Next Run" : {
       "localizations" : {
         "en" : {
@@ -2239,38 +2499,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "次回 %@"
-          }
-        }
-      }
-    },
-    "No Apps" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No Apps"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリがありません"
-          }
-        }
-      }
-    },
-    "No automatic refresh" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No automatic refresh"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自動更新なし"
           }
         }
       }
@@ -2371,18 +2599,24 @@
         }
       }
     },
-    "No permission to execute" : {
+    "No ping reply" : {
+      "comment" : "Value for a router that drops pings although the internet can be reached. Kept short to fit under the route diagram",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No permission to execute"
-          }
-        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "実行権限がありません"
+            "value" : "ping 応答なし"
+          }
+        }
+      }
+    },
+    "No response" : {
+      "comment" : "Value when no ping got a reply",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "応答なし"
           }
         }
       }
@@ -2435,6 +2669,17 @@
         }
       }
     },
+    "Noise" : {
+      "comment" : "Row label in the network detail: Wi-Fi noise level",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ノイズ"
+          }
+        }
+      }
+    },
     "None" : {
       "comment" : "Shown when there is nothing to show, e.g. no schedule trigger or no log output",
       "localizations" : {
@@ -2448,6 +2693,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "なし"
+          }
+        }
+      }
+    },
+    "Not connected" : {
+      "comment" : "Network path status: no network interface is usable",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未接続"
           }
         }
       }
@@ -2484,6 +2740,28 @@
         }
       }
     },
+    "Not measured yet" : {
+      "comment" : "Speed section when no speed test has run",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "まだ計測していません"
+          }
+        }
+      }
+    },
+    "Not reached" : {
+      "comment" : "Accessibility value of a stage in the network route diagram (router, internet, DNS) that couldn't be reached or wasn't checked",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "届いていません"
+          }
+        }
+      }
+    },
     "Not redirected" : {
       "localizations" : {
         "en" : {
@@ -2500,23 +2778,6 @@
         }
       }
     },
-    "Not running" : {
-      "comment" : "Reason shown for a monitored app that isn't running",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Not running"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "未起動"
-          }
-        }
-      }
-    },
     "Nothing to Monitor" : {
       "localizations" : {
         "en" : {
@@ -2529,6 +2790,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "監視対象がありません"
+          }
+        }
+      }
+    },
+    "Offline" : {
+      "comment" : "Reason of the network item when no network interface is usable",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Offline"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オフライン"
           }
         }
       }
@@ -2594,6 +2872,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "フォルダを開く"
+          }
+        }
+      }
+    },
+    "Open Location Services" : {
+      "comment" : "Settings: button that opens Location Services in System Settings after the permission was denied",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "位置情報サービスを開く"
           }
         }
       }
@@ -2694,6 +2983,17 @@
         }
       }
     },
+    "Other" : {
+      "comment" : "Network interface type that is not Wi-Fi, Ethernet or cellular (such as a VPN)",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "その他"
+          }
+        }
+      }
+    },
     "Output" : {
       "comment" : "Picker that switches between standard output and standard error logs",
       "localizations" : {
@@ -2707,6 +3007,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "出力"
+          }
+        }
+      }
+    },
+    "Packet loss" : {
+      "comment" : "Reason of the network item when some pings to the internet are lost",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Packet loss"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パケットロスがあります"
+          }
+        }
+      }
+    },
+    "Packet Loss" : {
+      "comment" : "Section title in the network detail: packet loss of pings to the router and the internet",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パケットロス"
           }
         }
       }
@@ -2744,6 +3072,17 @@
         }
       }
     },
+    "Reachable" : {
+      "comment" : "Internet access: a page on the internet could be loaded",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続できます"
+          }
+        }
+      }
+    },
     "Refresh" : {
       "comment" : "Command that checks all items again",
       "localizations" : {
@@ -2773,22 +3112,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "すべての項目を更新 (⌘R)"
-          }
-        }
-      }
-    },
-    "Refresh Interval" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Refresh Interval"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "更新間隔"
           }
         }
       }
@@ -2826,39 +3149,6 @@
         }
       }
     },
-    "Remove" : {
-      "comment" : "Button that removes an app from the monitored apps list",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "削除"
-          }
-        }
-      }
-    },
-    "Remove from the list" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove from the list"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "一覧から外す"
-          }
-        }
-      }
-    },
     "Remove This Time" : {
       "localizations" : {
         "en" : {
@@ -2892,6 +3182,28 @@
         }
       }
     },
+    "Requires Location Services" : {
+      "comment" : "Settings: subtitle explaining that showing the Wi-Fi network name needs Location Services",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "位置情報サービスの許可が必要です"
+          }
+        }
+      }
+    },
+    "Responsiveness" : {
+      "comment" : "Row label in the network detail: responsiveness under load in round trips per minute (RPM)",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "応答性"
+          }
+        }
+      }
+    },
     "Resume" : {
       "comment" : "Action that re-enables a stopped launchd job",
       "localizations" : {
@@ -2905,6 +3217,45 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "再開"
+          }
+        }
+      }
+    },
+    "Route" : {
+      "comment" : "Accessibility label of the network route diagram: Mac, router, internet and DNS",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "経路"
+          }
+        }
+      }
+    },
+    "Router" : {
+      "comment" : "Row label in the network detail: IP address of the router (default gateway), and the router stage of the network route diagram",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ルーター"
+          }
+        }
+      }
+    },
+    "Router not responding" : {
+      "comment" : "Reason of the network item when the router doesn't answer and the internet can't be reached. The router's IP address is shown separately",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Router not responding"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ルーターが応答しません"
           }
         }
       }
@@ -2955,22 +3306,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "実行中"
-          }
-        }
-      }
-    },
-    "Running from outside /Applications" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Running from outside /Applications"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "/Applications 外から起動しています"
           }
         }
       }
@@ -3335,6 +3670,56 @@
         }
       }
     },
+    "Show Wi-Fi Network Name" : {
+      "comment" : "Settings: toggle that shows the Wi-Fi network name (SSID). Turning it on asks for Location Services permission",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wi-Fi のネットワーク名を表示"
+          }
+        }
+      }
+    },
+    "Sign-in required" : {
+      "comment" : "Reason of the network item when the network shows a sign-in page (such as hotel Wi-Fi)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign-in required"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ネットワークへのログインが必要です"
+          }
+        }
+      }
+    },
+    "Signal" : {
+      "comment" : "Row label in the network detail: Wi-Fi signal strength (RSSI)",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "電波の強さ"
+          }
+        }
+      }
+    },
+    "Signal-to-Noise" : {
+      "comment" : "Row label in the network detail: Wi-Fi signal-to-noise ratio",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SN 比"
+          }
+        }
+      }
+    },
     "Source" : {
       "comment" : "Row title for where a launchd job is defined and whether it can be changed",
       "localizations" : {
@@ -3382,6 +3767,67 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "時刻指定"
+          }
+        }
+      }
+    },
+    "Speed" : {
+      "comment" : "Section title in the network detail: download and upload speed",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "速度"
+          }
+        }
+      }
+    },
+    "Speed History" : {
+      "comment" : "Section title in the network detail: chart of past download and upload speeds",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "速度の推移"
+          }
+        }
+      }
+    },
+    "Speed history appears here as measurements accumulate." : {
+      "comment" : "Shown in the speed history section until there are at least two measurements in the last 7 days",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "計測がたまるとここに推移が出ます。"
+          }
+        }
+      }
+    },
+    "Speed Test" : {
+      "comment" : "Settings: picker for how often to run a speed test automatically",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "速度の計測"
+          }
+        }
+      }
+    },
+    "Speed test failed" : {
+      "comment" : "Reason of the network item when the last speed test failed. The failure reason is shown separately",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speed test failed"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "速度を計測できませんでした"
           }
         }
       }
@@ -3515,54 +3961,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "毎週日曜"
-          }
-        }
-      }
-    },
-    "SwiftBar isn't running" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SwiftBar isn't running"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SwiftBar が起動していません"
-          }
-        }
-      }
-    },
-    "SwiftBar Plugin" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SwiftBar Plugin"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SwiftBar プラグイン"
-          }
-        }
-      }
-    },
-    "SwiftBar Plugins" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SwiftBar Plugins"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SwiftBar プラグイン"
           }
         }
       }
@@ -3780,6 +4178,17 @@
         }
       }
     },
+    "Transmit Rate" : {
+      "comment" : "Row label in the network detail: Wi-Fi link speed",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "送信レート"
+          }
+        }
+      }
+    },
     "Tue" : {
       "comment" : "Short weekday name (Tuesday)",
       "localizations" : {
@@ -3865,6 +4274,17 @@
         }
       }
     },
+    "Unreachable" : {
+      "comment" : "Internet access: nothing on the internet could be loaded. The reason is shown separately",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続できません"
+          }
+        }
+      }
+    },
     "Updated %@" : {
       "localizations" : {
         "en" : {
@@ -3941,6 +4361,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "シンボリックリンク %@ の参照先を書き換えます"
+          }
+        }
+      }
+    },
+    "Upload" : {
+      "comment" : "Row label in the network detail: upload speed",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上り"
           }
         }
       }
@@ -4023,6 +4454,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ファイル監視: %@"
+          }
+        }
+      }
+    },
+    "Weak Wi-Fi signal" : {
+      "comment" : "Reason of the network item when the Wi-Fi signal is weak or noisy",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weak Wi-Fi signal"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wi-Fi の電波が弱くなっています"
           }
         }
       }
@@ -4141,6 +4589,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "cron の起動時（@reboot）"
+          }
+        }
+      }
+    },
+    "Wi-Fi" : {
+      "comment" : "Section title in the network detail",
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wi-Fi"
           }
         }
       }

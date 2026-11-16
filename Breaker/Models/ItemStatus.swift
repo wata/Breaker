@@ -13,7 +13,7 @@ enum ItemStatus: Hashable, Sendable {
     case failed(reason: String, note: String? = nil)
     /// 未ロード・無効化など、意図して止めている状態
     case inactive(reason: String, note: String? = nil)
-    /// 動いてはいるが確認が必要な状態（実行パスが /Applications 外など）
+    /// 動いてはいるが確認が必要な状態（ログイン画面・パケットロス・解釈できない cron の行・接続の確認中など）
     case warning(reason: String, note: String? = nil)
     /// launchctl で状態を読めなかった。利用者が直せない閲覧のみのジョブなので、異常とも正常とも言わない
     case unknown(reason: String, note: String? = nil)

@@ -7,7 +7,7 @@ struct ItemStatusTests {
         (.running, false),
         (.inactive(reason: "Disabled", note: "launchctl disable"), false),
         (.failed(reason: "Exit code 1"), true),
-        (.warning(reason: "Running from outside /Applications"), true),
+        (.warning(reason: "Folder not found"), true),
         // 閲覧のみのジョブで状態を読めなかった。利用者が直せないので異常にしない
         (.unknown(reason: "Can't read status"), false),
     ])
@@ -26,7 +26,7 @@ struct ItemStatusTests {
         (.failed(reason: "Exit code 1"), "Failed (Exit code 1)", "Exit code 1"),
         (.failed(reason: "Script not found", note: "~/bin/x.py"), "Failed (Script not found)", "Script not found (~/bin/x.py)"),
         (.failed(reason: "Didn't run as scheduled", note: "Sat, 10/31, 3:30 AM"), "Failed (Didn't run as scheduled)", "Didn't run as scheduled (Sat, 10/31, 3:30 AM)"),
-        (.warning(reason: "Running from outside /Applications", note: "/tmp/A.app"), "Running from outside /Applications", "Running from outside /Applications (/tmp/A.app)"),
+        (.warning(reason: "Folder not found", note: "/Volumes/share"), "Folder not found", "Folder not found (/Volumes/share)"),
         (.unknown(reason: "Can't read status"), "Can't read status", "Can't read status"),
         (.warning(reason: "Folder not found", note: "it may not be mounted"), "Folder not found", "Folder not found (it may not be mounted)"),
         (.unknown(reason: "Can't read status", note: "boom"), "Can't read status", "Can't read status (boom)"),

@@ -5,13 +5,13 @@ import Testing
 struct MonitoredItemTests {
     @Test func idIsPrefixedWithKind() {
         let item = MonitoredItem(
-            key: "com.example.AudioPin",
-            name: "AudioPin",
-            status: .running,
-            detail: .monitoredApp(.init(bundleID: "com.example.AudioPin", appURL: URL(filePath: "/Applications/AudioPin.app"), isRunning: true))
+            key: "/Users/me/Downloads",
+            name: "Downloads",
+            status: .ok,
+            detail: .folderAction(.init(folderURL: URL(filePath: "/Users/me/Downloads", directoryHint: .isDirectory), scriptNames: [], isEnabled: true))
         )
-        #expect(item.id == "monitoredApp:com.example.AudioPin")
-        #expect(item.kind == .monitoredApp)
+        #expect(item.id == "folderAction:/Users/me/Downloads")
+        #expect(item.kind == .folderAction)
     }
 
     @Test func runningJobSummaryShowsPID() {
@@ -37,12 +37,12 @@ struct MonitoredItemTests {
     }
 
     /// ジョブ以外の止めた状態は、理由をそのまま見出しにして副行は出さない
-    @Test func inactiveAppKeepsReason() {
+    @Test func inactiveNonJobKeepsReason() {
         let item = MonitoredItem(
-            key: "com.example.ClipboardKeeper",
-            name: "ClipboardKeeper",
+            key: "/Users/me/Downloads",
+            name: "Downloads",
             status: .inactive(reason: "Not running"),
-            detail: .monitoredApp(.init(bundleID: "com.example.ClipboardKeeper", appURL: URL(filePath: "/Applications/ClipboardKeeper.app"), isRunning: false))
+            detail: .folderAction(.init(folderURL: URL(filePath: "/Users/me/Downloads", directoryHint: .isDirectory), scriptNames: [], isEnabled: true))
         )
         #expect(item.statusSummary == "Not running")
         #expect(item.statusNote == nil)
@@ -120,13 +120,13 @@ struct MonitoredItemTests {
         #expect(MonitoredItem(key: agent.label, name: agent.label, status: .failed(reason: "Exit code 1"), detail: .launchdJob(agent)).rowHelp == "User Agent · Exit code 1")
         #expect(MonitoredItem(key: daemon.label, name: daemon.label, status: .running, detail: .launchdJob(daemon)).rowHelp == "Daemon · Running")
 
-        let app = MonitoredItem(
-            key: "com.example.ClipboardKeeper",
-            name: "ClipboardKeeper",
+        let folder = MonitoredItem(
+            key: "/Users/me/Downloads",
+            name: "Downloads",
             status: .inactive(reason: "Not running"),
-            detail: .monitoredApp(.init(bundleID: "com.example.ClipboardKeeper", appURL: URL(filePath: "/Applications/ClipboardKeeper.app"), isRunning: false))
+            detail: .folderAction(.init(folderURL: URL(filePath: "/Users/me/Downloads", directoryHint: .isDirectory), scriptNames: [], isEnabled: true))
         )
-        #expect(app.rowHelp == "Not running")
+        #expect(folder.rowHelp == "Not running")
     }
 
     /**
@@ -155,22 +155,9 @@ struct MonitoredItemTests {
         #expect(detail(job(.ok, schedule: daily))?.hasPrefix("Next: Tomorrow") == true)
         #expect(detail(job(.ok, schedule: Schedule())) == "Last: 10 min. ago")
 
-        let plugin = MonitoredItem(key: "p", name: "p", status: .ok, detail: .swiftBarPlugin(.init(fileURL: URL(filePath: "/tmp/p"), refreshInterval: nil)))
-        #expect(detail(plugin) == nil)
-        #expect(detail(MonitoredItem.sampleSourceFailure, showsKind: true) == "SwiftBar · Check failed")
-    }
-
-    /// 起動していないアプリは一時停止ではなく停止の記号。launchd の無効は一時停止のまま
-    @Test func notRunningAppUsesStopSymbol() {
-        let app = MonitoredItem(
-            key: "a",
-            name: "a",
-            status: .inactive(reason: "Not running"),
-            detail: .monitoredApp(.init(bundleID: "a", appURL: URL(filePath: "/Applications/a.app"), isRunning: false))
-        )
-        #expect(app.statusSystemImage == "stop.circle.fill")
-        let job = MonitoredItem.LaunchdJob.stub()
-        #expect(MonitoredItem(key: job.label, name: job.label, status: .inactive(reason: "Disabled"), detail: .launchdJob(job)).statusSystemImage == "pause.circle.fill")
+        let folder = MonitoredItem(key: "/Users/me/Downloads", name: "Downloads", status: .ok, detail: .folderAction(.init(folderURL: URL(filePath: "/Users/me/Downloads", directoryHint: .isDirectory), scriptNames: [], isEnabled: true)))
+        #expect(detail(folder) == nil)
+        #expect(detail(MonitoredItem.sampleSourceFailure, showsKind: true) == "Folder Action · Check failed")
     }
 
     @Test func sharedLogIsNamedLog() {

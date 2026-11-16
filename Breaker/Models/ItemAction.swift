@@ -8,7 +8,6 @@ struct ItemAction: Identifiable, Hashable, Sendable {
         /// 実行権限付きの拡張子なしスクリプトを `open` すると Terminal で実行されてしまうので、テキストとして開く
         case openAsText(URL)
         case reveal(URL)
-        case launchApp(URL)
         /// シートを開くだけ。保存は `AppModel.saveSchedule` が行い、そこで一覧を取り直す
         case editSchedule(MonitoredItem.LaunchdJob)
         /// 項目の失敗を AI に調べさせるプロンプトをクリップボードに入れる。ログは押したときに読む
@@ -19,7 +18,7 @@ struct ItemAction: Identifiable, Hashable, Sendable {
         /// 開く・表示するだけの操作では項目の状態が変わらないので、一覧を取り直さない
         var changesState: Bool {
             switch self {
-            case .job, .launchApp:
+            case .job:
                 true
 
             case .open, .openAsText, .reveal, .editSchedule, .copyPrompt, .unavailable:
@@ -65,10 +64,6 @@ extension ItemAction {
 
     static var reloadTitle: String {
         String(localized: "Reload", comment: "Action that loads an unloaded launchd job back into launchd")
-    }
-
-    static var launchTitle: String {
-        String(localized: "Launch", comment: "Action that opens a monitored app that isn't running")
     }
 
     static var showInFinderTitle: String {
@@ -125,11 +120,7 @@ extension MonitoredItem {
                 ItemAction(title: ItemAction.stopTitle, systemImage: "pause.circle", operation: .unavailable, isEnabled: false),
             ]
 
-        case .monitoredApp(let app):
-            // launchd の今すぐ実行と同じ塗りの三角にそろえる
-            [ItemAction(title: ItemAction.launchTitle, systemImage: "play.fill", operation: .launchApp(app.appURL), isEnabled: !app.isRunning)]
-
-        case .folderAction, .swiftBarPlugin, .sourceFailure:
+        case .folderAction, .network, .sourceFailure:
             []
         }
     }
@@ -148,7 +139,7 @@ extension MonitoredItem {
                 isEnabled: status.isAbnormal
             )
 
-        case .folderAction, .swiftBarPlugin, .monitoredApp, .sourceFailure:
+        case .folderAction, .network, .sourceFailure:
             nil
         }
     }
@@ -213,17 +204,7 @@ extension MonitoredItem {
             }
             return nil
 
-        case .monitoredApp(let app):
-            if !app.isRunning {
-                return ItemAction(title: ItemAction.launchTitle, systemImage: "play.fill", operation: .launchApp(app.appURL))
-            }
-            // 起動中で要確認なのは /Applications の外から動いているときだけ。どこにあるかを見せる
-            if case .warning = status {
-                return ItemAction(title: ItemAction.showInFinderTitle, systemImage: "magnifyingglass", operation: .reveal(app.appURL))
-            }
-            return nil
-
-        case .folderAction, .swiftBarPlugin, .sourceFailure:
+        case .folderAction, .network, .sourceFailure:
             return nil
         }
     }
@@ -261,13 +242,7 @@ extension MonitoredItem {
                     ItemAction(title: String(localized: "Show \(url.lastPathComponent) in Finder"), systemImage: "magnifyingglass", operation: .reveal(url))
                 }
 
-        case .swiftBarPlugin(let plugin):
-            [ItemAction(title: ItemAction.showInFinderTitle, systemImage: "magnifyingglass", operation: .reveal(plugin.fileURL))]
-
-        case .monitoredApp(let app):
-            [ItemAction(title: ItemAction.showInFinderTitle, systemImage: "magnifyingglass", operation: .reveal(app.appURL))]
-
-        case .sourceFailure:
+        case .network, .sourceFailure:
             []
         }
     }

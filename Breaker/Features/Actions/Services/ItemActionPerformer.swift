@@ -1,13 +1,12 @@
 import AppKit
 import UniformTypeIdentifiers
 
-/// テストで Finder やアプリを実際に開かずに呼び出しを記録できるよう、`NSWorkspace` の使う部分だけを切り出す
+/// テストで Finder やエディタを実際に開かずに呼び出しを記録できるよう、`NSWorkspace` の使う部分だけを切り出す
 @MainActor
 protocol WorkspaceOpening {
     func open(_ url: URL) -> Bool
     func activateFileViewerSelecting(_ fileURLs: [URL])
     func openAsText(_ url: URL) async throws
-    func openApplication(at url: URL) async throws
 }
 
 extension NSWorkspace: WorkspaceOpening {
@@ -16,10 +15,6 @@ extension NSWorkspace: WorkspaceOpening {
             throw ItemActionError.textEditorNotFound
         }
         try await open([url], withApplicationAt: editorURL, configuration: NSWorkspace.OpenConfiguration())
-    }
-
-    func openApplication(at url: URL) async throws {
-        try await openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
     }
 }
 
@@ -73,9 +68,6 @@ struct ItemActionPerformer {
             // 見つからないと Finder は何も言わずに無視するので、先に確かめて伝える
             try requireExistence(of: url)
             workspace.activateFileViewerSelecting([url])
-
-        case .launchApp(let url):
-            try await workspace.openApplication(at: url)
 
         case .editSchedule:
             // シートを開く操作なので `AppModel.request` が受け取り、ここには来ない

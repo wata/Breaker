@@ -24,7 +24,7 @@ extension ItemDetailView {
                 VStack(alignment: .leading, spacing: Spacing.micro) {
                     HStack(alignment: .firstTextBaseline, spacing: Spacing.tight) {
                         // 色はシンボルだけに持たせ、見出しは本文の色で落ち着かせる
-                        Image(systemName: item.statusSystemImage)
+                        Image(systemName: item.status.systemImage)
                             .foregroundStyle(item.status.color)
                             .accessibilityLabel(item.status.title)
 
@@ -86,8 +86,10 @@ extension ItemDetailView {
                         .padding(.top, Spacing.micro)
                     }
 
-                    NoteEditor(note: note, autoDescription: item.autoDescription, saveNote: saveNote)
-                        .padding(.top, Spacing.tight)
+                    if item.acceptsNote {
+                        NoteEditor(note: note, autoDescription: item.autoDescription, saveNote: saveNote)
+                            .padding(.top, Spacing.tight)
+                    }
                 }
                 .task(id: errorLog.map { LogTailView.LoadKey(path: $0.path, refreshDate: refreshDate) }) {
                     guard let errorLog else { return }
@@ -122,7 +124,14 @@ extension ItemDetailView {
         var body: some View {
             Group {
                 if isEditing {
-                    TextField("Description", text: $draft, prompt: Text("Add Description"))
+                    TextField(
+                        "Description",
+                        text: $draft,
+                        prompt: Text(
+                            "Add Description (e.g. Backs up photos to the NAS every night)",
+                            comment: "Placeholder of the description of an item in the detail header. The example shows what to write"
+                        )
+                    )
                         .textFieldStyle(.plain)
                         .labelsHidden()
                         .focused($isFocused)
@@ -159,7 +168,10 @@ extension ItemDetailView {
                                     .foregroundStyle(.secondary)
 
                             case (true, nil):
-                                Text("Add Description")
+                                Text(
+                                    "Add Description (e.g. Backs up photos to the NAS every night)",
+                                    comment: "Placeholder of the description of an item in the detail header. The example shows what to write"
+                                )
                                     .foregroundStyle(.tertiary)
                             }
                         }

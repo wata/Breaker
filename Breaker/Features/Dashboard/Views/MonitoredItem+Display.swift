@@ -90,7 +90,7 @@ extension MonitoredItem {
         case .cronJob(let job):
             job.errorLog
 
-        case .folderAction, .swiftBarPlugin, .monitoredApp, .sourceFailure:
+        case .folderAction, .network, .sourceFailure:
             nil
         }
     }
@@ -107,7 +107,7 @@ extension MonitoredItem {
         case .cronJob(let job):
             (job.lastRun, job.schedule?.nextRun(after: now, lastRun: nil))
 
-        case .folderAction, .swiftBarPlugin, .monitoredApp, .sourceFailure:
+        case .folderAction, .network, .sourceFailure:
             nil
         }
     }
@@ -139,20 +139,25 @@ extension MonitoredItem {
     static func lastRunText(_ date: Date, style: RunDateStyle, now: Date, calendar: Calendar = .current, locale: Locale = .current) -> String {
         let text = switch style {
         case .relative:
-            Date.AnchoredRelativeFormatStyle(
-                anchor: date,
-                presentation: .named,
-                unitsStyle: .abbreviated,
-                locale: locale,
-                calendar: calendar,
-                capitalizationContext: .beginningOfSentence
-            )
-            .format(now)
+            relativeDateText(date, now: now, calendar: calendar, locale: locale)
 
         case .absolute:
             formatRunDate(date, now: now, calendar: calendar, locale: locale)
         }
         return String(localized: "Last: \(text)", language: locale)
+    }
+
+    /// `20 min. ago`。ネットワークの計測時刻も同じ書き方にする
+    static func relativeDateText(_ date: Date, now: Date, calendar: Calendar = .current, locale: Locale = .current) -> String {
+        Date.AnchoredRelativeFormatStyle(
+            anchor: date,
+            presentation: .named,
+            unitsStyle: .abbreviated,
+            locale: locale,
+            calendar: calendar,
+            capitalizationContext: .beginningOfSentence
+        )
+        .format(now)
     }
 
     static func nextRunText(_ date: Date, now: Date, calendar: Calendar = .current, locale: Locale = .current) -> String {

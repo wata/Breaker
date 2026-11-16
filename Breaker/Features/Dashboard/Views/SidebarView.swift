@@ -89,6 +89,13 @@ extension SidebarView {
 
         var body: some View {
             HStack(spacing: Spacing.micro) {
+                // 異常を集めた節だと見出しだけで分かるよう、要確認の記号を添える。読み上げは見出しの文字で足りる
+                if group == .attention {
+                    Image(systemName: ItemStatus.warningSystemImage)
+                        .foregroundStyle(Color.Status.warning)
+                        .accessibilityHidden(true)
+                }
+
                 Text(group.title)
 
                 if group == .attention {

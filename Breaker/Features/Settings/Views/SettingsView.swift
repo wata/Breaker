@@ -1,6 +1,5 @@
 import AppKit
 import SwiftUI
-import UniformTypeIdentifiers
 
 /// ⌘, で開く設定ウインドウ
 struct SettingsView: View {
@@ -50,38 +49,36 @@ struct SettingsView: View {
             }
 
             /**
-             Form の中に List を入れると、プレビューでは SwiftUI の内部（TableViewListCore_Mac2）で落ちて描けないため、
-             行を Form にそのまま並べ、各行に削除ボタンを置く。削除はたまにしか使わないので、ボタンはカーソルを合わせた行にだけ出す
+             通信量の注意は速度の計測にだけ掛かるので、ネットワーク名の行の下に付いて見えないよう節を分ける。
+             自動の計測は利用者の知らないうちに通信量を使うので、量と、測らない場面を選ぶところで言っておく
              */
             Section {
-                if viewModel.monitoredApps.isEmpty {
-                    Text("No Apps")
-                        .foregroundStyle(.secondary)
-                }
-
-                ForEach(viewModel.monitoredApps) { app in
-                    MonitoredAppRow(app: app) {
-                        Task {
-                            await viewModel.removeMonitoredApp(app)
-                        }
+                Picker("Speed Test", selection: $viewModel.speedTestInterval) {
+                    ForEach(SpeedTestInterval.allCases, id: \.self) { interval in
+                        Text(interval.title)
                     }
                 }
-
-                Button("Add App…", systemImage: "plus") {
-                    Task {
-                        await viewModel.addMonitoredApps(at: Self.chooseApps())
-                    }
-                }
-                .buttonStyle(.borderless)
-                // 枠の無いボタンは Form の中で二次的な文字の灰色になり、「No Apps」と並ぶと押せないように見えるので、アクセントの色にする
-                .foregroundStyle(.tint)
-                .help("Choose apps in /Applications to add")
             } header: {
-                Text("Monitored Apps")
+                Text("Network")
             } footer: {
-                Text("Breaker shows in the sidebar whether these apps are running. You won't be notified when one quits.")
+                Text("Each speed test sends and receives about 300 MB. Breaker doesn't run speed tests automatically over a personal hotspot or in Low Data Mode.")
                     .font(.Small.regular)
                     .foregroundStyle(.secondary)
+            }
+
+            Section {
+                NetworkNameRow(
+                    isOn: Binding(
+                        get: { viewModel.showsNetworkName },
+                        set: { isOn in
+                            Task {
+                                await viewModel.setShowsNetworkName(isOn)
+                            }
+                        }
+                    ),
+                    locationStatus: viewModel.locationStatus,
+                    openSystemSettings: viewModel.openLocationSettings
+                )
             }
         }
         .formStyle(.grouped)
@@ -96,82 +93,42 @@ struct SettingsView: View {
 }
 
 extension SettingsView {
-    /// 複数選べる。Mac で動く iPhone / iPad アプリも選べてしまうが、Bundle ID が読めないので追加の段階で飛ばす
-    private static func chooseApps() async -> [URL] {
-        let panel = NSOpenPanel()
-        panel.directoryURL = URL(filePath: "/Applications", directoryHint: .isDirectory)
-        panel.allowedContentTypes = [.application]
-        panel.allowsMultipleSelection = true
-        panel.canChooseDirectories = false
-        panel.prompt = String(localized: "Add", comment: "Button in the open panel that adds the chosen apps")
-        return await panel.begin() == .OK ? panel.urls : []
-    }
-
     /**
-     削除のボタンはカーソルを合わせたときだけ出す。行をフォーカスできるようにすると、設定を開いたときに最初の行へ
-     フォーカスが当たって枠とボタンが出てしまうので、キーボードと VoiceOver では右クリックメニューと行の操作から消す。
-     アプリが見つからない行は、選んだことは残したまま、汎用のアイコンを薄くして見つからないことを言う
+     ネットワーク名のためだけに位置情報を求めるので、トグルをオンにしたときにだけ尋ねる。
+     オンなのに拒否されているときは名前が出ない理由が分からないので、オフになっていることを言い、システム設定へ案内する
      */
-    struct MonitoredAppRow: View {
-        let app: MonitoredApp
-        let remove: () -> Void
-
-        @State private var isHovering = false
+    struct NetworkNameRow: View {
+        @Binding var isOn: Bool
+        let locationStatus: LocationAuthorizationStatus
+        let openSystemSettings: () -> Void
 
         var body: some View {
-            HStack(spacing: Spacing.tight) {
-                if let appURL = app.appURL {
-                    Image(nsImage: NSWorkspace.shared.icon(forFile: appURL.path(percentEncoded: false)))
-                        .resizable()
-                        .frame(width: Layout.appIconSize, height: Layout.appIconSize)
+            let isBlocked = isOn && locationStatus == .denied
+            Toggle(isOn: $isOn) {
+                Text("Show Wi-Fi Network Name")
+
+                if isBlocked {
+                    Text("Location Services is off for Breaker")
                 } else {
-                    Image(nsImage: NSWorkspace.shared.icon(for: .applicationBundle))
-                        .resizable()
-                        .frame(width: Layout.appIconSize, height: Layout.appIconSize)
-                        .opacity(Opacity.dimmed)
-                }
-
-                VStack(alignment: .leading) {
-                    Text(app.name)
-                        .foregroundStyle(app.appURL == nil ? .secondary : .primary)
-
-                    if app.appURL == nil {
-                        Text("Not Found")
-                            .font(.Small.regular)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .help(app.bundleID)
-
-                Spacer()
-
-                if isHovering {
-                    Button("Remove", systemImage: "minus.circle", action: remove)
-                        .labelStyle(.iconOnly)
-                        .buttonStyle(.borderless)
-                        .help("Remove from the list")
+                    Text("Requires Location Services")
                 }
             }
-            .contentShape(.rect)
-            .onHover { isHovering = $0 }
-            .contextMenu {
-                Button("Remove", action: remove)
+
+            if isBlocked {
+                Button("Open Location Services", action: openSystemSettings)
             }
-            .accessibilityAction(named: Text("Remove"), remove)
         }
     }
 }
 
-#Preview("Monitored Apps") {
-    let defaults = UserDefaults.preview
-    defaults.set(["com.apple.Safari", "com.apple.TextEdit", "com.example.missing"], forKey: MonitoredAppSource.bundleIDsKey)
-    return SettingsView(viewModel: .init(loginItem: PreviewLoginItem(status: .enabled), defaults: defaults))
+#Preview("Enabled") {
+    SettingsView(viewModel: .init(loginItem: PreviewLoginItem(status: .enabled), locationAuthorization: PreviewLocationAuthorization(status: .notDetermined), defaults: .preview))
 }
 
 #Preview("Requires Approval") {
-    SettingsView(viewModel: .init(loginItem: PreviewLoginItem(status: .requiresApproval), defaults: .preview))
+    SettingsView(viewModel: .init(loginItem: PreviewLoginItem(status: .requiresApproval), locationAuthorization: PreviewLocationAuthorization(status: .authorized), defaults: .preview))
 }
 
 #Preview("Not Registered") {
-    SettingsView(viewModel: .init(loginItem: PreviewLoginItem(status: .disabled), defaults: .preview))
+    SettingsView(viewModel: .init(loginItem: PreviewLoginItem(status: .disabled), locationAuthorization: PreviewLocationAuthorization(status: .denied), defaults: .preview))
 }

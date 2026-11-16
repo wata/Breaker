@@ -39,14 +39,14 @@ struct AppModelTests {
             Self.job("job-warn", status: .warning(reason: "x")),
             Self.job("job-fail", status: .failed(reason: "Exit code 1")),
             Self.job("job-ok", status: .ok),
-            Self.plugin("plugin-warn", status: .warning(reason: "x")),
-            Self.plugin("plugin-fail", status: .failed(reason: "x")),
-            Self.plugin("plugin-stopped", status: .inactive(reason: "x")),
+            Self.folder("folder-warn", status: .warning(reason: "x")),
+            Self.folder("folder-fail", status: .failed(reason: "x")),
+            Self.folder("folder-stopped", status: .inactive(reason: "x")),
         ]
         let appModel = AppModel(items: items, defaults: defaults.userDefaults)
         let sections = appModel.sections
-        #expect(sections.map(\.group) == [.attention, .kind(.launchdJob), .kind(.swiftBarPlugin)])
-        #expect(sections.map { $0.items.map(\.name) } == [["job-fail", "plugin-fail", "job-warn", "plugin-warn"], ["job-ok"], ["plugin-stopped"]])
+        #expect(sections.map(\.group) == [.attention, .kind(.launchdJob), .kind(.folderAction)])
+        #expect(sections.map { $0.items.map(\.name) } == [["job-fail", "folder-fail", "job-warn", "folder-warn"], ["job-ok"], ["folder-stopped"]])
     }
 
     /// 異常が無ければ要確認の節は出さない
@@ -62,13 +62,13 @@ struct AppModelTests {
         let items = Self.scopedItems(status: .failed(reason: "Exit code 1")) + [Self.job("ok", status: .ok)]
         let appModel = AppModel(items: items, defaults: defaults.userDefaults)
         #expect(appModel.sections.map(\.group) == [.attention, .kind(.launchdJob)])
-        #expect(appModel.sections[0].items.map(\.name) == ["home", "plugin.sh"])
+        #expect(appModel.sections[0].items.map(\.name) == ["home", "folder"])
 
         appModel.showsAbnormalOnly = true
         #expect(appModel.sections.map(\.group) == [.attention])
 
         appModel.launchdScope = .daemons
-        #expect(appModel.sections[0].items.map(\.name) == ["daemon", "plugin.sh"])
+        #expect(appModel.sections[0].items.map(\.name) == ["daemon", "folder"])
     }
 
     /// 異常になって要確認の節へ移っても、ID が変わらないので同じ項目を選んだまま
@@ -132,7 +132,7 @@ struct AppModelTests {
 
         let visible = appModel.sections.flatMap(\.items)
         #expect(visible.filter { $0.kind == .launchdJob }.map(\.name) == expected)
-        #expect(visible.contains { $0.kind == .swiftBarPlugin })
+        #expect(visible.contains { $0.kind == .folderAction })
     }
 
     /// 異常のみは表示範囲と重ねて効く
@@ -143,7 +143,7 @@ struct AppModelTests {
             Self.job("app", isHomeJob: false, status: .ok),
             Self.job("daemon", origin: .daemon, status: .failed(reason: "Exit code 1")),
             Self.job("quiet", origin: .daemon, status: .ok),
-            MonitoredItem.sampleSwiftBarPlugin,
+            Self.folder("folder", status: .ok),
         ]
         let appModel = AppModel(items: items, defaults: defaults.userDefaults)
         appModel.showsAbnormalOnly = true
@@ -449,12 +449,12 @@ struct AppModelTests {
         return MonitoredItem(key: "\(origin):\(label)", name: label, status: status, detail: .launchdJob(job))
     }
 
-    private static func plugin(_ name: String, status: ItemStatus) -> MonitoredItem {
+    private static func folder(_ name: String, status: ItemStatus) -> MonitoredItem {
         MonitoredItem(
             key: "/tmp/\(name)",
             name: name,
             status: status,
-            detail: .swiftBarPlugin(.init(fileURL: URL(filePath: "/tmp/\(name)"), refreshInterval: nil))
+            detail: .folderAction(.init(folderURL: URL(filePath: "/tmp/\(name)", directoryHint: .isDirectory), scriptNames: [], isEnabled: true))
         )
     }
 
@@ -465,12 +465,7 @@ struct AppModelTests {
             job("app", isHomeJob: false, status: status),
             job("systemAgent", origin: .systemAgent, status: status),
             job("daemon", origin: .daemon, status: status),
-            MonitoredItem(
-                key: "/tmp/plugin.sh",
-                name: "plugin.sh",
-                status: status,
-                detail: .swiftBarPlugin(.init(fileURL: URL(filePath: "/tmp/plugin.sh"), refreshInterval: nil))
-            ),
+            folder("folder", status: status),
         ]
     }
 

@@ -37,12 +37,6 @@ struct ItemActionPerformerTests {
         #expect(workspace.calls == ["open /tmp/job.log"])
     }
 
-    @Test func launchAppUsesWorkspace() async throws {
-        let workspace = StubWorkspace()
-        try await performer(workspace).perform(.launchApp(URL(filePath: "/Applications/Example.app")))
-        #expect(workspace.calls == ["launch /Applications/Example.app"])
-    }
-
     @Test func copyPromptWritesToPasteboard() async throws {
         let workspace = StubWorkspace()
         let pasteboard = StubPasteboard()
@@ -82,10 +76,6 @@ final class StubWorkspace: WorkspaceOpening {
 
     func openAsText(_ url: URL) async throws {
         calls.append("openAsText \(url.path(percentEncoded: false))")
-    }
-
-    func openApplication(at url: URL) async throws {
-        calls.append("launch \(url.path(percentEncoded: false))")
     }
 }
 

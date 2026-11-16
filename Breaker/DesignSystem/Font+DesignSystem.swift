@@ -58,6 +58,15 @@ extension Font {
         static let semiBold = Font.system(size: 17, weight: .semibold)
     }
 
+    /**
+     詳細のネットワークの図（経路図の記号・速度と電波の大きな数字）。本文より目立つ大きさを、ほかの画面の大きな見出しと同じテキストスタイルで決める。
+     macOS は Dynamic Type に対応しないので、テキストスタイルでもシステムの文字サイズの設定には追従しない
+     */
+    enum Display {
+        static let symbol = Font.title2
+        static let value = Font.largeTitle.weight(.semibold).monospacedDigit()
+    }
+
     // MARK: - Numeric Fonts
 
     /// 数字専用。monospacedDigit を焼き込み、時刻や件数の幅を揃える

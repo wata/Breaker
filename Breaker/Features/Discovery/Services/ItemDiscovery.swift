@@ -4,8 +4,16 @@ import Foundation
 struct ItemDiscovery: Sendable {
     private let sources: [any ItemSource]
 
-    init(sources: [any ItemSource] = [LaunchAgentSource(), CronSource(), FolderActionSource(), SwiftBarSource(), MonitoredAppSource()]) {
+    init(sources: [any ItemSource] = standardSources) {
         self.sources = sources
+    }
+
+    /**
+     ネットワーク以外の Source。ネットワークは速度計測のスケジューラと結ぶ必要があるので、`AppDelegate` が末尾に足す。
+     テストやプレビューで `ItemDiscovery()` を作っても ping や NWPathMonitor を走らせない。Source は状態を持つので呼ぶたびに作る
+     */
+    static var standardSources: [any ItemSource] {
+        [LaunchAgentSource(), CronSource(), FolderActionSource()]
     }
 
     func items() async -> [MonitoredItem] {

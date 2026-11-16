@@ -2,7 +2,7 @@
 
 <img src="assets/icon.png" width="128" height="128" alt="Breaker icon">
 
-A Mac app that watches the automations you built yourself — launchd jobs, cron jobs, Folder Actions, SwiftBar plugins — and notifies you the moment one breaks.
+A Mac app that watches the automations you built yourself — launchd jobs, cron jobs, Folder Actions — and your network, and notifies you the moment one breaks.
 
 Scheduled scripts fail silently. Breaker was born after one of mine kept failing for weeks without anyone noticing.
 
@@ -12,7 +12,8 @@ Scheduled scripts fail silently. Breaker was born after one of mine kept failing
 
 ## Features
 
-- **One list for everything you scheduled**: launchd agents in `~/Library/LaunchAgents`, your crontab, Folder Actions (AppleScript and Automator), SwiftBar plugins, and any apps you choose to keep running. Agents and daemons in `/Library` can be shown too, view only.
+- **One list for everything you scheduled**: launchd agents in `~/Library/LaunchAgents`, your crontab, and Folder Actions (AppleScript and Automator). Agents and daemons in `/Library` can be shown too, view only.
+- **Network health**: connection, router, internet and DNS checked every minute, with ping latency and packet loss, Wi-Fi signal, and download/upload speed measured with macOS's `networkQuality` (hourly by default, about 300 MB each). You're notified only when the connection is down.
 - **Catches failures exit codes miss**: a job that exited with an error, isn't loaded, missed a scheduled run, points to a script or interpreter that no longer exists, or wrote an error to its log.
 - **Notifications and a Dock badge** when something breaks. Breaker keeps checking every 60 seconds after you close its window.
 - **Fix it in place**: run, stop, and resume launchd jobs, edit their schedules, and read stdout and stderr with the error lines highlighted.
@@ -35,7 +36,7 @@ brew install --cask wata/tap/breaker
 
 On first launch, Breaker asks for permission to send notifications and to control System Events (to read your Folder Actions).
 
-Choose the apps to watch in Settings (⌘,). Use the filter in the sidebar to show launchd jobs installed by apps, or only items with issues.
+Choose how often to measure the speed in Settings (⌘,). Use the filter in the sidebar to show launchd jobs installed by apps, or only items with issues.
 
 ## Development
 

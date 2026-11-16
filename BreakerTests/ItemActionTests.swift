@@ -136,34 +136,8 @@ struct ItemActionTests {
         #expect(recovery(.ok) == nil)
     }
 
-    /// /Applications の外から動いているアプリは、どこにあるかを Finder で見せる
-    @Test func appOutsideApplicationsRecoversByRevealing() {
-        let appURL = URL(filePath: "/tmp/build/Example.app")
-        let item = MonitoredItem(
-            key: "dev.example",
-            name: "Example",
-            status: .warning(reason: "Running from outside /Applications", note: appURL.path(percentEncoded: false)),
-            detail: .monitoredApp(.init(bundleID: "dev.example", appURL: appURL, isRunning: true))
-        )
-        #expect(item.recoveryAction?.title == "Show in Finder")
-        #expect(item.recoveryAction?.operation == .reveal(appURL))
-    }
-
-    @Test(arguments: [true, false])
-    func monitoredAppRecoversByLaunching(isRunning: Bool) {
-        let appURL = URL(filePath: "/Applications/Example.app")
-        let item = MonitoredItem(
-            key: "dev.example",
-            name: "Example",
-            status: isRunning ? .running : .inactive(reason: "Not running"),
-            detail: .monitoredApp(.init(bundleID: "dev.example", appURL: appURL, isRunning: isRunning))
-        )
-        #expect(item.recoveryAction?.operation == (isRunning ? nil : .launchApp(appURL)))
-        #expect(item.recoveryAction?.title == (isRunning ? nil : "Launch"))
-    }
-
     @Test func otherKindsHaveNoRecovery() {
-        let others = MonitoredItem.samples.filter { $0.kind != .launchdJob && $0.kind != .monitoredApp } + [MonitoredItem.sampleSwiftBarPlugin]
+        let others = MonitoredItem.samples.filter { $0.kind != .launchdJob }
         #expect(!others.isEmpty)
         #expect(others.allSatisfy { $0.recoveryAction == nil })
     }
@@ -228,20 +202,6 @@ struct ItemActionTests {
         #expect(actions.map(\.operation) == [.open(folderURL), .reveal(scriptsURL.appending(path: "rename.scpt"))])
     }
 
-    @Test(arguments: [true, false])
-    func monitoredAppLaunchesOnlyWhenNotRunning(isRunning: Bool) {
-        let appURL = URL(filePath: "/Applications/Example.app")
-        let item = MonitoredItem(
-            key: "dev.example",
-            name: "Example",
-            status: .ok,
-            detail: .monitoredApp(.init(bundleID: "dev.example", appURL: appURL, isRunning: isRunning))
-        )
-        #expect(item.controlActions.map(\.operation) == [.launchApp(appURL)])
-        #expect(item.controlActions.map(\.isEnabled) == [!isRunning])
-        #expect(item.fileActions().map(\.operation) == [.reveal(appURL)])
-    }
-
     @Test func onlyLaunchdJobsOfferScheduleEditing() {
         let job = MonitoredItem.LaunchdJob.stub(isDisabledFile: true)
         let item = MonitoredItem(key: job.label, name: job.label, status: .ok, detail: .launchdJob(job))
@@ -285,7 +245,7 @@ struct ItemActionTests {
     }
 
     @Test func onlyLaunchdAndCronOfferPrompt() {
-        let others = MonitoredItem.samples.filter { ![.launchdJob, .cronJob].contains($0.kind) } + [MonitoredItem.sampleSwiftBarPlugin, MonitoredItem.sampleSourceFailure]
+        let others = MonitoredItem.samples.filter { ![.launchdJob, .cronJob].contains($0.kind) } + [MonitoredItem.sampleSourceFailure]
         #expect(!others.isEmpty)
         #expect(others.allSatisfy { $0.promptAction == nil })
         let crons = MonitoredItem.samples.filter { $0.kind == .cronJob }

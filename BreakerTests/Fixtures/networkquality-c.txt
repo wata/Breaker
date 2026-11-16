@@ -1,0 +1,47 @@
+{
+  "base_rtt": 11.983421325683594,
+  "cli_options": [
+    "-c",
+    "-M",
+    "5"
+  ],
+  "dl_bytes_transferred": 134506947,
+  "dl_flows": 5,
+  "dl_phase_duration": 4.93507707118988,
+  "dl_phase_end": "2026-11-16 14:54:35.057",
+  "dl_phase_start": "2026-11-16 14:54:30.122",
+  "dl_throughput": 232652336,
+  "draft_version": 8,
+  "end_date": "2026-11-16 14:54:35.063",
+  "interface_name": "en0",
+  "os_version": "Version 27.2.1 (Build 26B131)",
+  "other": {
+    "ecn_values": {
+      "ecn_disabled": 95
+    },
+    "interface-type": {
+      "wifi": 95
+    },
+    "l4s_enablement": {
+      "disabled": 95
+    },
+    "protocols_seen": {
+      "h2": 95
+    },
+    "proxy_state": {
+      "not_proxied": 95
+    },
+    "rat": {
+      "unknown": 95
+    }
+  },
+  "responsiveness": 797.47509765625,
+  "start_date": "2026-11-16 14:54:29.931",
+  "test_endpoint": "jptyo5-edge-fx-015.aaplimg.com",
+  "ul_bytes_transferred": 71237633,
+  "ul_flows": 5,
+  "ul_phase_duration": 4.93507707118988,
+  "ul_phase_end": "2026-11-16 14:54:35.057",
+  "ul_phase_start": "2026-11-16 14:54:30.122",
+  "ul_throughput": 118548984
+}
