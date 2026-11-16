@@ -29,7 +29,8 @@ struct AIPromptTests {
             standardErrorPath: missingLog.path(percentEncoded: false),
             environmentVariables: [.init(name: "PATH", value: "/usr/bin:/bin")],
             service: nil,
-            lastRun: nil
+            lastRun: nil,
+            processStartDate: nil
         )
         let item = MonitoredItem(key: job.label, name: "backup", status: .failed(reason: "Exit code 1", note: "Last run failed"), detail: .launchdJob(job))
 

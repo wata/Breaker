@@ -18,6 +18,10 @@ struct MonitoredItemTests {
         let service = LaunchdServiceInfo(state: "running", pid: 812, runs: 1, lastExit: .never)
         let item = MonitoredItem(key: "com.example.job", name: "com.example.job", status: .running, detail: .launchdJob(.stub(service: service)))
         #expect(item.statusSummary == "Running (PID 812)")
+
+        // 4桁以上でも、Activity Monitor の PID と見比べられるよう桁区切りを入れない
+        let large = LaunchdServiceInfo(state: "running", pid: 9634, runs: 1, lastExit: .never)
+        #expect(MonitoredItem(key: "com.example.job", name: "com.example.job", status: .running, detail: .launchdJob(.stub(service: large))).statusSummary == "Running (PID 9634)")
     }
 
     /// 無効にしたジョブの見出しは「無効」だけ。定義ファイルの名前から分からない止め方だけを副行に出す

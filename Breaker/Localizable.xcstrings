@@ -35,19 +35,19 @@
         }
       }
     },
-    "%@ (PID %d)" : {
+    "%@ (PID %@)" : {
       "comment" : "Status of a running launchd job followed by its process ID",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ (PID %2$d)"
+            "value" : "%1$@ (PID %2$@)"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@（PID %2$d）"
+            "value" : "%1$@（PID %2$@）"
           }
         }
       }
@@ -251,6 +251,35 @@
         }
       }
     },
+    "%lld runs since loaded" : {
+      "comment" : "Number of times a launchd job has run since launchd loaded it",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld run since loaded"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld runs since loaded"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 回実行（読み込み後）"
+          }
+        }
+      }
+    },
     "Add at least one time." : {
       "localizations" : {
         "en" : {
@@ -312,6 +341,23 @@
         }
       }
     },
+    "Always Running" : {
+      "comment" : "Kind of launchd job that launchd keeps running (KeepAlive)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Always Running"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "常駐"
+          }
+        }
+      }
+    },
     "Always running (KeepAlive)" : {
       "localizations" : {
         "en" : {
@@ -350,6 +396,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "At login"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ログイン時"
+          }
+        }
+      }
+    },
+    "At Login" : {
+      "comment" : "Kind of launchd job that runs when it is loaded, usually at login (RunAtLoad)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At Login"
           }
         },
         "ja" : {
@@ -422,6 +485,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ウインドウを閉じても動き続け、異常があれば通知します。"
+          }
+        }
+      }
+    },
+    "Calendar" : {
+      "comment" : "Kind of launchd job that runs at set times (StartCalendarInterval)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calendar"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "時刻指定"
           }
         }
       }
@@ -1223,6 +1303,23 @@
         }
       }
     },
+    "Ended by %@" : {
+      "comment" : "Last exit of a launchd job that was ended by a signal, e.g. Ended by SIGTERM",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ended by %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ で終了"
+          }
+        }
+      }
+    },
     "Enter a day from 1 to 31." : {
       "localizations" : {
         "en" : {
@@ -1618,6 +1715,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "失敗"
+          }
+        }
+      }
+    },
+    "File Watch" : {
+      "comment" : "Kind of launchd job that runs when a file changes (WatchPaths)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File Watch"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイル監視"
           }
         }
       }
@@ -2653,6 +2767,23 @@
         }
       }
     },
+    "No Triggers" : {
+      "comment" : "Kind of launchd job without any launch trigger: it only runs when started by another program or by hand",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Triggers"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "起動条件なし"
+          }
+        }
+      }
+    },
     "No User Agents" : {
       "localizations" : {
         "en" : {
@@ -2790,6 +2921,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "監視対象がありません"
+          }
+        }
+      }
+    },
+    "Now %@" : {
+      "comment" : "Label above the current time on the run timeline of a launchd job, e.g. Now 9:34 PM",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Now %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今 %@"
           }
         }
       }
@@ -3864,6 +4012,23 @@
         }
       }
     },
+    "Started %@" : {
+      "comment" : "Label above the start of the green band on the run timeline of a launchd job that launchd keeps running, e.g. Started Yesterday 6:05 PM",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Started %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "起動 %@"
+          }
+        }
+      }
+    },
     "Startup" : {
       "comment" : "Settings section about opening at login and checking in the background",
       "localizations" : {
@@ -4146,6 +4311,23 @@
         }
       }
     },
+    "Timeline" : {
+      "comment" : "Accessibility label of the run timeline of a launchd job: scheduled runs, the last run and now",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Timeline"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タイムライン"
+          }
+        }
+      }
+    },
     "Today %@" : {
       "localizations" : {
         "en" : {
@@ -4285,6 +4467,23 @@
         }
       }
     },
+    "Until Next Run" : {
+      "comment" : "Title of the countdown to the next run of a launchd job in the detail",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Until Next Run"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次回まで"
+          }
+        }
+      }
+    },
     "Updated %@" : {
       "localizations" : {
         "en" : {
@@ -4372,6 +4571,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "上り"
+          }
+        }
+      }
+    },
+    "Uptime" : {
+      "comment" : "Title of how long a launchd job that launchd keeps running has been running, in the detail",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uptime"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "稼働時間"
           }
         }
       }

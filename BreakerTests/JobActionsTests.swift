@@ -181,7 +181,8 @@ extension MonitoredItem.LaunchdJob {
             standardErrorPath: standardErrorPath,
             environmentVariables: [],
             service: service,
-            lastRun: nil
+            lastRun: nil,
+            processStartDate: nil
         )
     }
 }

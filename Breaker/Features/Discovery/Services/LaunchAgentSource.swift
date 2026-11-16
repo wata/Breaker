@@ -206,7 +206,9 @@ struct LaunchAgentSource: ItemSource {
             standardErrorPath: job.standardErrorPath,
             environmentVariables: job.environmentVariables,
             service: service,
-            lastRun: lastRun
+            lastRun: lastRun,
+            // 使うのは常駐ジョブのタイムラインだけなので、ほかの動いているジョブには問い合わせない
+            processStartDate: job.schedule.keepAlive ? service.flatMap { $0.isRunning ? $0.pid : nil }.flatMap(ProcessStartDate.date) : nil
         )
         return MonitoredItem(
             key: key,

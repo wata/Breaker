@@ -259,3 +259,29 @@ extension Schedule.CalendarEntry {
         return entry
     }
 }
+
+extension Schedule {
+    /// ジョブを起動するきっかけの種類。詳細のカードで、どんな動き方のジョブかを記号と名前で見せる
+    enum Trigger: CaseIterable, Sendable {
+        case keepAlive
+        case calendar
+        case interval
+        case watchPaths
+        case atLoad
+        /// どのきっかけも無い。ほかのプログラムからの呼び出しや、手動の実行でだけ走る
+        case none
+    }
+
+    /// 持っているきっかけ。常駐 → 時刻指定 → 間隔 → ファイル監視 → ログイン時の順（動き方を大きく決めるものから）
+    var triggers: [Trigger] {
+        let triggers: [Trigger] = [
+            keepAlive ? .keepAlive : nil,
+            calendarEntries.isEmpty ? nil : .calendar,
+            (interval ?? 0) > 0 ? .interval : nil,
+            watchPaths.isEmpty ? nil : .watchPaths,
+            runAtLoad ? .atLoad : nil,
+        ]
+        .compactMap { $0 }
+        return triggers.isEmpty ? [.none] : triggers
+    }
+}

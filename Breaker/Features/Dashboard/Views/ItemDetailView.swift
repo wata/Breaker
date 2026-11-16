@@ -30,6 +30,8 @@ struct ItemDetailView: View {
 
             switch item.detail {
             case .launchdJob(let job):
+                LaunchdActivitySection(job: job, status: item.status)
+
                 LaunchdJobSections(
                     job: job,
                     isAbnormal: item.status.isAbnormal,

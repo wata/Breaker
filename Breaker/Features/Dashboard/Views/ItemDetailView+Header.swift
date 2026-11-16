@@ -64,7 +64,7 @@ extension ItemDetailView {
                             .textSelection(.enabled)
                     }
 
-                    if let summary = item.runSummary(now: .now, lastRunStyle: .absolute) {
+                    if let summary = item.headerRunSummary(now: .now) {
                         Text(summary)
                             .font(.Body.regular)
                             .foregroundStyle(.secondary)
@@ -211,7 +211,8 @@ extension MonitoredItem {
             case (.running, .launchdJob(let job)) = (status, detail),
             let pid = job.service?.pid
         {
-            String(localized: "\(status.summary) (PID \(pid))", comment: "Status of a running launchd job followed by its process ID")
+            // 数字のまま渡すと「9,634」のように桁区切りが入り、Activity Monitor の PID と見比べにくいので文字にして渡す
+            String(localized: "\(status.summary) (PID \(String(pid)))", comment: "Status of a running launchd job followed by its process ID")
         } else {
             status.summary
         }

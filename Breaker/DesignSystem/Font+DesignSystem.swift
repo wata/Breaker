@@ -65,6 +65,8 @@ extension Font {
     enum Display {
         static let symbol = Font.title2
         static let value = Font.largeTitle.weight(.semibold).monospacedDigit()
+        /// 大きな数字に添える単位（残り時間の「時間」「分」）。数字より二段小さく細くし、数字だけが目に入るようにする
+        static let unit = Font.title3
     }
 
     // MARK: - Numeric Fonts

@@ -83,7 +83,8 @@ struct ItemDiscoveryTests {
             standardErrorPath: nil,
             environmentVariables: [],
             service: nil,
-            lastRun: nil
+            lastRun: nil,
+            processStartDate: nil
         )
         return MonitoredItem(key: label, name: label, status: status, detail: .launchdJob(detail))
     }

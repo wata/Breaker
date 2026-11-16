@@ -37,6 +37,24 @@ struct Schedule: Hashable, Sendable {
         calendarEntries.compactMap { $0.previousRun(atOrBefore: date, calendar: calendar) }.max()
     }
 
+    /**
+     `interval` の中の予定の時刻（詳細のタイムラインの目盛り）。`limit` を超える分は数えない。
+     毎分のような密な予定でも探しすぎないよう打ち切り、呼び出し側は `limit` に届いたら目盛りではなく帯で描く
+     */
+    func runs(in interval: DateInterval, lastRun: Date?, limit: Int, calendar: Calendar = .current) -> [Date] {
+        var runs: [Date] = []
+        var date = interval.start
+        while
+            runs.count < limit,
+            let run = nextRun(after: date, lastRun: lastRun, calendar: calendar),
+            run <= interval.end
+        {
+            runs.append(run)
+            date = run
+        }
+        return runs
+    }
+
     private func intervalRun(after date: Date, lastRun: Date) -> Date? {
         guard
             let interval,

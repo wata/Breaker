@@ -28,4 +28,18 @@ enum Layout {
     static let chartLineWidth: CGFloat = 2
     /// 上りの線の破線。色だけに頼らず下りと見分けられるようにする
     static let chartLineDash: [CGFloat] = [3, 3]
+    /// launchd の詳細のタイムラインの軌道の行。印（`timelineMarkerDiameter`）と、その下の目盛りの刻みが収まる高さ
+    static let timelineHeight: CGFloat = 22
+    /// タイムラインの軌道の太さ。予定の印（`timelineRunDiameter`）より細くして、印を軌道に載せて見せる
+    static let timelineTrackHeight: CGFloat = 6
+    /// タイムラインの予定の印。1日に1時間ごとの予定（24個）が重ならずに並ぶ大きさ
+    static let timelineRunDiameter: CGFloat = 8
+    /// 次回・前回・走らなかった予定の印。予定の印より一回り大きくして目立たせる。目盛りはこの印の下に刻む
+    static let timelineMarkerDiameter: CGFloat = 13
+    /// これからの予定の白抜きの印の縁。小さな印でも輪と読める太さ
+    static let timelineDotStrokeWidth: CGFloat = 1.5
+    /// タイムラインの説明に添える帯の見本の長さ。軌道の帯と同じ太さで、帯だと読み取れる長さ
+    static let timelineSwatchWidth: CGFloat = 16
+    /// タイムラインの「今」の線と目盛りの線の幅
+    static let timelineHairlineWidth: CGFloat = 1
 }

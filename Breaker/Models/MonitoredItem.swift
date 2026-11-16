@@ -52,6 +52,8 @@ struct MonitoredItem: Identifiable, Hashable, Sendable {
         let service: LaunchdServiceInfo?
         /// launchd は最終実行時刻を持たないので、ログファイルの更新時刻と、Breaker が runs の変化で実行を見た時刻の新しいほうで近似する
         let lastRun: Date?
+        /// 動いている常駐ジョブ（KeepAlive）のプロセスの起動時刻。いつから動いているかを見せる。常駐でない・動いていない・読めないときは nil
+        let processStartDate: Date?
 
         struct EnvironmentVariable: Hashable, Sendable {
             let name: String

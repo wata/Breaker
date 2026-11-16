@@ -119,6 +119,30 @@ struct ScheduleTests {
         #expect(multiple.keepAlive)
     }
 
+    @Test func runsInIntervalListsEveryRunUpToTheLimit() {
+        let daily = Schedule(calendarEntries: [Entry(minute: 30, hour: 3)])
+        let week = DateInterval(start: friday, duration: 7 * 86400)
+        let runs = daily.runs(in: week, lastRun: nil, limit: 100, calendar: Self.calendar)
+        #expect(runs.count == 7)
+        #expect(runs.first == date(2026, 10, 31, 3, 30))
+        #expect(runs.last == date(2026, 11, 6, 3, 30))
+
+        let everyMinute = Schedule(calendarEntries: [Entry()])
+        #expect(everyMinute.runs(in: week, lastRun: nil, limit: 50, calendar: Self.calendar).count == 50)
+
+        let interval = Schedule(interval: 3600)
+        let day = DateInterval(start: friday, duration: 86400)
+        #expect(interval.runs(in: day, lastRun: friday.addingTimeInterval(-600), limit: 100, calendar: Self.calendar).count == 24)
+        #expect(interval.runs(in: day, lastRun: nil, limit: 100, calendar: Self.calendar).isEmpty)
+    }
+
+    @Test func triggersAreOrderedByHowTheJobRuns() {
+        #expect(Schedule(interval: 1800, runAtLoad: true, watchPaths: ["/tmp"]).triggers == [.interval, .watchPaths, .atLoad])
+        #expect(Schedule(calendarEntries: [Entry(minute: 0)], runAtLoad: true, keepAlive: true).triggers == [.keepAlive, .calendar, .atLoad])
+        #expect(Schedule(interval: 0).triggers == [.none])
+        #expect(Schedule().triggers == [.none])
+    }
+
     private func nextRun(_ schedule: Schedule, after date: Date) -> Date? {
         schedule.nextRun(after: date, lastRun: nil, calendar: Self.calendar)
     }

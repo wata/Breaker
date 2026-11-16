@@ -17,6 +17,7 @@ extension MonitoredItem {
             schedule: Schedule(runAtLoad: true, keepAlive: true),
             service: .init(state: "running", pid: 812, runs: 1, lastExit: .never),
             lastRun: .now.addingTimeInterval(-600),
+            processStartDate: .now.addingTimeInterval(-2 * 86400 - 5 * 3600),
             autoDescription: "Calendar Sync: fetches events from a shared calendar and writes them to an ICS file"
         ),
         launchdJob(
@@ -277,6 +278,7 @@ extension MonitoredItem {
         lastRun: Date?,
         isDisabledFile: Bool = false,
         isHomeJob: Bool = true,
+        processStartDate: Date? = nil,
         autoDescription: String? = nil
     ) -> MonitoredItem {
         let detail = LaunchdJob.sample(
@@ -285,7 +287,8 @@ extension MonitoredItem {
             service: service,
             lastRun: lastRun,
             isDisabledFile: isDisabledFile,
-            isHomeJob: isHomeJob
+            isHomeJob: isHomeJob,
+            processStartDate: processStartDate
         )
         return MonitoredItem(key: label, name: label, status: status, detail: .launchdJob(detail), autoDescription: autoDescription)
     }
@@ -302,7 +305,8 @@ extension MonitoredItem.LaunchdJob {
         origin: Origin = .userAgent,
         standardOutPath: String? = nil,
         standardErrorPath: String? = nil,
-        environmentVariables: [EnvironmentVariable] = []
+        environmentVariables: [EnvironmentVariable] = [],
+        processStartDate: Date? = nil
     ) -> Self {
         Self(
             label: label,
@@ -319,7 +323,8 @@ extension MonitoredItem.LaunchdJob {
             standardErrorPath: standardErrorPath ?? "/Users/me/Library/Logs/\(label).err.log",
             environmentVariables: environmentVariables,
             service: service,
-            lastRun: lastRun
+            lastRun: lastRun,
+            processStartDate: processStartDate
         )
     }
 }
