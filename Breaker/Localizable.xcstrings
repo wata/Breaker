@@ -1037,7 +1037,7 @@
       }
     },
     "CPU %@" : {
-      "comment" : "Sidebar: CPU usage of the whole Mac, e.g. CPU 42%",
+      "comment" : "Sidebar: CPU usage as a share of the whole Mac (all cores), e.g. CPU 42%",
       "localizations" : {
         "ja" : {
           "stringUnit" : {

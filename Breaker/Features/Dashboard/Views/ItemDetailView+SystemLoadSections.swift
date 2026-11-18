@@ -29,7 +29,7 @@ extension ItemDetailView {
             }
 
             Section {
-                LoadChart(history: load.history, culprit: culprit, sinceDate: sinceDate)
+                LoadChart(load: load, culprit: culprit, sinceDate: sinceDate)
             } header: {
                 Text("CPU History")
             } footer: {
@@ -131,14 +131,16 @@ extension ItemDetailView {
 
     /**
      直近24時間の CPU。全体を面で描き、原因のアプリがあれば、走り始めた時刻に縦線を引いてそこから先だけを線で重ねる。
-     原因の無い区間まで線を描くと横軸に重なって軸に見えるので描かない。縦軸はデータに合わせ、低い負荷が下に潰れないようにする
+     原因の無い区間まで線を描くと横軸に重なって軸に見えるので描かない。縦軸はデータに合わせ、低い負荷が下に潰れないようにする。
+     面と線を同じ縦軸で比べられるよう、どちらも Mac 全体＝100 の割合で描く
      */
     struct LoadChart: View {
-        let history: [LoadSample]
+        let load: SystemLoad
         let culprit: String?
         let sinceDate: Date?
 
         var body: some View {
+            let history = load.history
             if
                 let lastDate = history.last?.date,
                 history.count > 1
@@ -148,11 +150,11 @@ extension ItemDetailView {
                     ForEach(history, id: \.date) { sample in
                         AreaMark(
                             x: .value("Date", sample.date),
-                            y: .value("CPU", sample.cpuPercent),
+                            y: .value("CPU", load.macPercent(of: sample.cpuPercent)),
                             series: .value("Series", total)
                         )
                         .foregroundStyle(by: .value("Series", total))
-                        .accessibilityValue(SystemLoad.percentText(sample.cpuPercent))
+                        .accessibilityValue(SystemLoad.percentText(load.macPercent(of: sample.cpuPercent)))
                     }
 
                     if
@@ -167,12 +169,12 @@ extension ItemDetailView {
                         ForEach(history.filter { $0.date >= sinceDate }, id: \.date) { sample in
                             LineMark(
                                 x: .value("Date", sample.date),
-                                y: .value("CPU", sample.cpuPercent(of: culprit)),
+                                y: .value("CPU", load.macPercent(of: sample.cpuPercent(of: culprit))),
                                 series: .value("Series", culprit)
                             )
                             .foregroundStyle(by: .value("Series", culprit))
                             .lineStyle(StrokeStyle(lineWidth: Layout.chartLineWidth))
-                            .accessibilityValue(SystemLoad.percentText(sample.cpuPercent(of: culprit)))
+                            .accessibilityValue(SystemLoad.percentText(load.macPercent(of: sample.cpuPercent(of: culprit))))
                         }
                     }
                 }

@@ -181,10 +181,10 @@ enum AIPrompt {
         return lines
     }
 
-    /// CPU の % の基準（1コア＝100%）とコア数を書き添え、全体に対する割合と取り違えさせない
+    /// CPU の % の基準（全体は Mac 全体＝100%、アプリは1コア＝100%）とコア数を書き添え、取り違えさせない
     private static func systemLoadDetails(of load: SystemLoad) -> [String] {
         var lines = [
-            "CPU (100% = one core, \(load.coreCount) cores): \(SystemLoad.percentText(load.cpuPercent, locale: english))",
+            "CPU (share of the whole Mac, \(load.coreCount) cores): \(SystemLoad.percentText(load.macPercent(of: load.cpuPercent), locale: english))",
             "Load average (1 min): \(load.loadAverage.formatted(.number.precision(.fractionLength(1)).locale(english)))",
             "Thermal state: \(load.thermalState)",
             "Memory pressure: \(load.memoryPressure)",

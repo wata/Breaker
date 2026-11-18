@@ -2,7 +2,7 @@ import Foundation
 
 /// 負荷の値の書式。詳細とサイドバーで同じ書き方にそろえるため、どれも `String` を返す
 extension SystemLoad {
-    /// `42%`・`170%`。1コアを使い切って 100%
+    /// `42%`・`170%`。渡した値の基準（1コア＝100 か Mac 全体＝100 か）のまま書く
     static func percentText(_ percent: Double, locale: Locale = .current) -> String {
         (percent / 100).formatted(.percent.precision(.fractionLength(0)).locale(locale))
     }
@@ -10,7 +10,7 @@ extension SystemLoad {
     /// サイドバーの行の2行目（`CPU 42% · Xcode`）。いちばん使っているアプリを添えて、何が重いかを行だけで読めるようにする
     func summary(locale: Locale = .current) -> String {
         let cpu = String(
-            localized: LocalizedStringResource("CPU \(Self.percentText(cpuPercent, locale: locale))", comment: "Sidebar: CPU usage of the whole Mac, e.g. CPU 42%"),
+            localized: LocalizedStringResource("CPU \(Self.percentText(macPercent(of: cpuPercent), locale: locale))", comment: "Sidebar: CPU usage as a share of the whole Mac (all cores), e.g. CPU 42%"),
             language: locale
         )
         if let top = consumers.first {

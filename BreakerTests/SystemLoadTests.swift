@@ -153,6 +153,7 @@ struct SystemLoadTests {
 
     // MARK: - 書式
 
+    /// Mac 全体の CPU はアクティビティモニタ下部と同じく全体比で見せ、10 コアで 420（1コア＝100）は 42% と書く
     @Test func summary() {
         let load = SystemLoad(
             cpuPercent: 420,
@@ -164,6 +165,6 @@ struct SystemLoadTests {
             history: []
         )
         let english = Locale(identifier: "en_US")
-        #expect(load.summary(locale: english) == "CPU 420% · Xcode")
+        #expect(load.summary(locale: english) == "CPU 42% · Xcode")
     }
 }

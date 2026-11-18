@@ -2,8 +2,10 @@ import Foundation
 
 /**
  ある時点の Mac の負荷。チェックごとに作り直し、項目の詳細として持つ。
- CPU はどれもアクティビティモニタと同じ「1コアを使い切って 100」の % にそろえる（利用者の判断）。Mac 全体に対する割合にすると、
- 1コアを使い切って止まらないアプリが 10 コアの Mac では「10%」になり、暴走しているように読めなかった
+ CPU の値はどれも「1コアを使い切って 100」の % で持つ。アプリごとの値はこのまま見せる（アクティビティモニタの「% CPU」と同じ）。
+ Mac 全体に対する割合にすると、1コアを使い切って止まらないアプリが 10 コアの Mac では「10%」になり、暴走しているように読めなかった。
+ Mac 全体の値だけは、見せるときに `macPercent(of:)` で全体比に直す（利用者の判断）。アクティビティモニタ下部の「システム」「ユーザ」と
+ 同じく 100% を超えないようにし、「CPU 210%」のように読めない値を出さない
  */
 struct SystemLoad: Hashable, Sendable {
     /// `ProcessInfo.ThermalState` を Sendable な値で持つ。serious 以上で macOS が CPU を絞る
@@ -30,6 +32,7 @@ struct SystemLoad: Hashable, Sendable {
         let cpuPercent: Double
     }
 
+    /// 1コアを使い切って 100。見せるときは `macPercent(of:)` で全体比に直す
     let cpuPercent: Double
     let coreCount: Int
     /// 直近1分の平均。コア数より大きいと、CPU を待っている処理がある
@@ -40,6 +43,11 @@ struct SystemLoad: Hashable, Sendable {
     let consumers: [Consumer]
     /// 古い順。今の値（`cpuPercent`・`consumers`）も最後の1件として入っている
     let history: [LoadSample]
+
+    /// 1コア＝100 の値を、Mac 全体を 100 とした割合に直す
+    func macPercent(of corePercent: Double) -> Double {
+        corePercent / Double(max(coreCount, 1))
+    }
 }
 
 /// 1分ごとの記録。24時間分を残してグラフに描き、続いている負荷の判定に使う
