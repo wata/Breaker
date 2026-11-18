@@ -139,6 +139,8 @@ extension ItemDetailView {
         let culprit: String?
         let sinceDate: Date?
 
+        @State private var hoverDate: Date?
+
         var body: some View {
             let history = load.history
             if
@@ -146,6 +148,7 @@ extension ItemDetailView {
                 history.count > 1
             {
                 let total = String(localized: "Whole Mac", comment: "Chart legend: CPU of the whole Mac")
+                let hovered = hoverDate.flatMap { history.nearest(to: $0, by: \.date) }
                 Chart {
                     ForEach(history, id: \.date) { sample in
                         AreaMark(
@@ -177,6 +180,15 @@ extension ItemDetailView {
                             .accessibilityValue(SystemLoad.percentText(load.macPercent(of: sample.cpuPercent(of: culprit))))
                         }
                     }
+
+                    if let hovered {
+                        RuleMark(x: .value("Date", hovered.date))
+                            .foregroundStyle(Color.secondary)
+                            .lineStyle(StrokeStyle(lineWidth: Layout.timelineHairlineWidth))
+                            .annotation(position: .top, spacing: 0, overflowResolution: .init(x: .fit(to: .plot), y: .fit(to: .plot))) {
+                                ChartTooltip(title: MonitoredItem.formatRunDate(hovered.date, now: lastDate), rows: tooltipRows(of: hovered, total: total))
+                            }
+                    }
                 }
                 .chartForegroundStyleScale(
                     domain: [total] + [culprit].compactMap { $0 },
@@ -199,12 +211,38 @@ extension ItemDetailView {
                         }
                     }
                 }
+                .chartHoverDate($hoverDate)
                 .frame(height: Layout.speedChartHeight)
                 .padding(.vertical, Spacing.micro)
             } else {
                 Text("CPU history appears here as checks accumulate.")
                     .foregroundStyle(.secondary)
             }
+        }
+
+        /// 原因のアプリは、線を描いている区間（走り始めてから）だけ添える
+        private func tooltipRows(of sample: LoadSample, total: String) -> [ChartTooltip.Row] {
+            var rows = [
+                ChartTooltip.Row(
+                    title: total,
+                    value: SystemLoad.percentText(load.macPercent(of: sample.cpuPercent)),
+                    color: Color.LoadChart.total
+                ),
+            ]
+            if
+                let culprit,
+                let sinceDate,
+                sample.date >= sinceDate
+            {
+                rows.append(
+                    ChartTooltip.Row(
+                        title: culprit,
+                        value: SystemLoad.percentText(load.macPercent(of: sample.cpuPercent(of: culprit))),
+                        color: Color.LoadChart.highlight
+                    )
+                )
+            }
+            return rows
         }
     }
 }

@@ -88,9 +88,9 @@ extension ItemDetailView {
                 UsageBar(segments: UsageBar.segments(of: usage, locations: locations))
 
                 HStack(spacing: Spacing.standard) {
-                    LegendItem(color: Color.StorageBar.other, title: String(localized: "Everything Else", comment: "Storage bar legend: used space outside the listed folders, such as the system and apps"))
+                    LegendItem(color: Color.StorageBar.other, title: UsageBar.otherTitle)
 
-                    LegendItem(color: Color.StorageBar.available, title: String(localized: "Available"))
+                    LegendItem(color: Color.StorageBar.available, title: UsageBar.availableTitle)
                 }
                 .font(.Base.regular)
                 .foregroundStyle(.secondary)
@@ -103,15 +103,25 @@ extension ItemDetailView {
         }
     }
 
-    /// 起動ディスクの内訳。上位の場所、それ以外の使用中、空きの順に左から並べる
+    /**
+     起動ディスクの内訳。上位の場所、それ以外の使用中、空きの順に左から並べる。
+     細い色は一覧の行と色で結びにくいので、ホバーした色の名前と大きさを札で見せる
+     */
     struct UsageBar: View {
         struct Segment: Identifiable {
             let id: String
+            let title: String
             let bytes: Int64
             let color: Color
         }
 
+        /// 凡例と札で同じ名前を使う
+        static let otherTitle = String(localized: "Everything Else", comment: "Storage bar legend: used space outside the listed folders, such as the system and apps")
+        static let availableTitle = String(localized: "Available")
+
         let segments: [Segment]
+
+        @State private var hoveredID: String?
 
         var body: some View {
             let total = max(segments.reduce(0) { $0 + $1.bytes }, 1)
@@ -121,23 +131,46 @@ extension ItemDetailView {
                         Rectangle()
                             .fill(segment.color)
                             .frame(width: geometry.size.width * CGFloat(segment.bytes) / CGFloat(total))
+                            .onHover { isInside in
+                                if isInside {
+                                    hoveredID = segment.id
+                                } else if hoveredID == segment.id {
+                                    hoveredID = nil
+                                }
+                            }
                     }
                 }
             }
             .frame(height: Layout.storageBarHeight)
             .clipShape(.capsule)
+            // 帯の形で切り抜かれないよう、札は切り抜いた後に重ねる
+            .overlay {
+                GeometryReader { geometry in
+                    if let index = segments.firstIndex(where: { $0.id == hoveredID }) {
+                        let segment = segments[index]
+                        let start = geometry.size.width * CGFloat(segments[..<index].reduce(0) { $0 + $1.bytes }) / CGFloat(total)
+                        let width = geometry.size.width * CGFloat(segment.bytes) / CGFloat(total)
+                        ChartTooltip(
+                            title: nil,
+                            rows: [ChartTooltip.Row(title: segment.title, value: StorageUsage.bytesText(segment.bytes), color: segment.color)]
+                        )
+                        .tooltipPlacement(x: start + width / 2, width: geometry.size.width)
+                        .offset(y: -Spacing.micro)
+                    }
+                }
+            }
         }
 
         /// 一覧に出ない分は「その他」にまとめる。走査がまだ無ければ使用中と空きの2つだけ
         static func segments(of usage: StorageUsage, locations: [StorageScan.Location]) -> [Segment] {
             let used = max(usage.capacityBytes - usage.availableBytes, 0)
             let listed = locations.enumerated().map { index, location in
-                Segment(id: location.location.rawValue, bytes: location.bytes, color: Color.StorageBar.locations[index])
+                Segment(id: location.location.rawValue, title: location.location.title, bytes: location.bytes, color: Color.StorageBar.locations[index])
             }
             let other = max(used - listed.reduce(0) { $0 + $1.bytes }, 0)
             return listed + [
-                Segment(id: "other", bytes: other, color: Color.StorageBar.other),
-                Segment(id: "available", bytes: usage.availableBytes, color: Color.StorageBar.available),
+                Segment(id: "other", title: otherTitle, bytes: other, color: Color.StorageBar.other),
+                Segment(id: "available", title: availableTitle, bytes: usage.availableBytes, color: Color.StorageBar.available),
             ]
         }
     }

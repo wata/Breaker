@@ -28,6 +28,8 @@ enum Layout {
     static let chartLineWidth: CGFloat = 2
     /// 上りの線の破線。色だけに頼らず下りと見分けられるようにする
     static let chartLineDash: [CGFloat] = [3, 3]
+    /// グラフをホバーしたときの値の札の角丸。macOS のツールチップやポップオーバーと同じくらいの丸み
+    static let chartTooltipCornerRadius: CGFloat = 6
     /// ストレージの内訳のバーの高さ。細い場所の色も見分けられる太さ
     static let storageBarHeight: CGFloat = 12
     /// ストレージの一覧の行の頭の点と、バーの説明の点。小さくても色が読み取れる大きさ

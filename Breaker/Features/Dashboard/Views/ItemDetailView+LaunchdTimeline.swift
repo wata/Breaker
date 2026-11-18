@@ -343,9 +343,16 @@ extension ItemDetailView {
     /**
      タイムラインを描く。上に「今」（常駐ジョブは「起動」も）の見出し、中に軌道と印、下に目盛りの見出しと凡例を置く。
      色を持たせるのは、次回（アクセント色）と、前回の結果・走らなかった予定（状態の色）だけにし、ほかの予定は退かせる。
-     動きは次回の印の呼吸だけにし、Reduce Motion では止める
+     動きは次回の印の呼吸だけにし、Reduce Motion では止める。
+     印は小さくてポインタを合わせにくいので、軌道のどこをホバーしても、いちばん近い印の日時と説明を札ですぐに見せる
      */
     struct TimelineStrip: View {
+        /// ホバーで札を出す印
+        struct Marker {
+            let date: Date
+            let text: String
+        }
+
         let timeline: RunTimeline
         let status: ItemStatus
 
@@ -353,6 +360,7 @@ extension ItemDetailView {
         /// 「今」と「起動」の見出しを両端で切らず、重ねずに置くため、幅を測っておく
         @State private var nowLabelWidth: CGFloat = 0
         @State private var startLabelWidth: CGFloat = 0
+        @State private var hoverX: CGFloat?
 
         var body: some View {
             // 端の印が軌道の丸い端からはみ出さないよう、印の半径だけ内側に描く
@@ -390,6 +398,11 @@ extension ItemDetailView {
                 GeometryReader { proxy in
                     let midY = proxy.size.height / 2
                     let x = { (date: Date) in inset + timeline.fraction(of: date) * (proxy.size.width - inset * 2) }
+                    // 印から離れた所では札を出さない。どの印の札かが分からなくなる
+                    let hovered = hoverX.flatMap { hoverX in
+                        markers.filter { abs(x($0.date) - hoverX) <= Layout.timelineMarkerDiameter }
+                            .min { abs(x($0.date) - hoverX) < abs(x($1.date) - hoverX) }
+                    }
 
                     ZStack(alignment: .topLeading) {
                         Capsule()
@@ -415,13 +428,8 @@ extension ItemDetailView {
                                 .position(x: x(tick), y: midY + (Layout.timelineMarkerDiameter + Spacing.micro) / 2)
                         }
 
-                        // ツールチップが印の上だけで出るよう、`.position` で広がる前に付ける
-                        // 8pt の点ではポインタを合わせにくいので、ツールチップの出る範囲だけ広げる
                         ForEach(timeline.runs, id: \.self) { run in
                             RunDot(isPast: timeline.ranUntil.map { run <= $0 } ?? false)
-                                .padding(Spacing.micro)
-                                .contentShape(.rect)
-                                .help(MonitoredItem.format(run))
                                 .position(x: x(run), y: midY)
                         }
 
@@ -436,7 +444,6 @@ extension ItemDetailView {
                                 .font(.Body.regular)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(status.color)
-                                .help(status.fullReason ?? status.title)
                                 .position(x: x(missedRun), y: midY)
                         }
 
@@ -448,7 +455,6 @@ extension ItemDetailView {
                             Circle()
                                 .fill(ItemStatus.running.color)
                                 .frame(width: Layout.timelineMarkerDiameter, height: Layout.timelineMarkerDiameter)
-                                .help(MonitoredItem.format(since))
                                 .position(x: x(since), y: midY)
                         }
 
@@ -464,7 +470,6 @@ extension ItemDetailView {
                                     timeline.lastRunStatus == nil ? AnyShapeStyle(.secondary) : AnyShapeStyle(.white),
                                     timeline.lastRunStatus.map { AnyShapeStyle($0.color) } ?? AnyShapeStyle(.secondary)
                                 )
-                                .help(MonitoredItem.lastRunText(lastRun, style: .absolute, now: timeline.now))
                                 .position(x: x(lastRun), y: midY)
                         }
 
@@ -476,8 +481,24 @@ extension ItemDetailView {
                                 .foregroundStyle(.tint)
                                 // 薄くなると止めた予定に見えるので、色は保ったまま大きさだけで呼吸させる
                                 .symbolEffect(.breathe.plain, options: .repeat(.continuous), isActive: !reduceMotion)
-                                .help(MonitoredItem.nextRunText(nextRun, now: timeline.now))
                                 .position(x: x(nextRun), y: midY)
+                        }
+
+                        // 札の下端を印の上端に合わせ、印を隠さない
+                        if let hovered {
+                            ChartTooltip(title: hovered.text)
+                                .tooltipPlacement(x: x(hovered.date), width: proxy.size.width)
+                                .offset(y: midY - Layout.timelineMarkerDiameter / 2 - Spacing.micro)
+                        }
+                    }
+                    .contentShape(.rect)
+                    .onContinuousHover { phase in
+                        switch phase {
+                        case .active(let location):
+                            hoverX = location.x
+
+                        case .ended:
+                            hoverX = nil
                         }
                     }
                 }
@@ -516,6 +537,19 @@ extension ItemDetailView {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text("Timeline", comment: "Accessibility label of the run timeline of a launchd job: scheduled runs, the last run and now"))
             .accessibilityValue(Text(verbatim: timeline.accessibilityValue(status: status)))
+        }
+
+        /// 札の文。常駐ジョブの起動の印は、線の上の見出しと同じ「起動 …」にする
+        private var markers: [Marker] {
+            let runs = timeline.runs.map { Marker(date: $0, text: MonitoredItem.format($0)) }
+            let others = [
+                timeline.missedRun.map { Marker(date: $0, text: status.fullReason ?? status.title) },
+                timeline.runningSince.flatMap { timeline.interval.contains($0) ? Marker(date: $0, text: timeline.startLabel ?? MonitoredItem.format($0)) : nil },
+                timeline.lastRun.map { Marker(date: $0, text: MonitoredItem.lastRunText($0, style: .absolute, now: timeline.now)) },
+                timeline.nextRun.map { Marker(date: $0, text: MonitoredItem.nextRunText($0, now: timeline.now)) },
+            ]
+            // 同じ時刻に予定の点と前回・次回が重なったら、色の付いた印の説明を出す
+            return others.compactMap { $0 } + runs
         }
     }
 

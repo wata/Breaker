@@ -303,11 +303,14 @@ extension ItemDetailView {
         let records: [SpeedTestRecord]
         let now: Date
 
+        @State private var hoverDate: Date?
+
         var body: some View {
             if records.count <= 1 {
                 Text("Speed history appears here as measurements accumulate.")
                     .foregroundStyle(.secondary)
             } else {
+                let hovered = hoverDate.flatMap { records.nearest(to: $0, by: \.date) }
                 Chart {
                     ForEach(SpeedDirection.allCases, id: \.self) { direction in
                         ForEach(records, id: \.date) { record in
@@ -321,6 +324,27 @@ extension ItemDetailView {
                                 .lineStyle(by: .value("Direction", direction.title))
                             }
                         }
+                    }
+
+                    if
+                        let hovered,
+                        let speed = hovered.speed
+                    {
+                        RuleMark(x: .value("Date", hovered.date))
+                            .foregroundStyle(Color.secondary)
+                            .lineStyle(StrokeStyle(lineWidth: Layout.timelineHairlineWidth))
+                            .annotation(position: .top, spacing: 0, overflowResolution: .init(x: .fit(to: .plot), y: .fit(to: .plot))) {
+                                ChartTooltip(
+                                    title: MonitoredItem.formatRunDate(hovered.date, now: now),
+                                    rows: SpeedDirection.allCases.map { direction in
+                                        ChartTooltip.Row(
+                                            title: direction.title,
+                                            value: NetworkHealth.speedText(megabitsPerSecond: direction.megabitsPerSecond(of: speed)),
+                                            color: direction.color
+                                        )
+                                    }
+                                )
+                            }
                     }
                 }
                 .chartForegroundStyleScale(
@@ -340,6 +364,7 @@ extension ItemDetailView {
                 }
                 .chartXScale(domain: now.addingTimeInterval(-SpeedTestScheduler.chartPeriod)...now)
                 .chartYAxisLabel(NetworkHealth.speedUnit)
+                .chartHoverDate($hoverDate)
                 .frame(height: Layout.speedChartHeight)
                 .padding(.vertical, Spacing.micro)
             }
