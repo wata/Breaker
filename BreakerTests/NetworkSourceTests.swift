@@ -15,7 +15,7 @@ struct NetworkSourceTests {
         #expect(health.routerAddress == "192.168.1.1")
         #expect(health.dnsServers == ["192.168.1.1"])
         #expect(health.routerPing?.destination == "192.168.1.1")
-        #expect(health.internetPing?.destination == NetworkSource.internetPingDestination)
+        #expect(health.internetPing?.destination == NetworkSource.internetPingDestinations.first)
         #expect(health.dnsLookup == .resolved(milliseconds: 10))
         #expect(health.internetAccess == .reachable)
         #expect(health.wifi?.rssi == -50)
@@ -86,8 +86,31 @@ struct NetworkSourceTests {
 
     /// 接続系でない問題（遅延など）は揺れ止めをかけず、そのまま出す
     @Test func nonConnectionFindingIsShownImmediately() async throws {
-        let pinger = StubPinger { host in Self.ping(host, average: host == NetworkSource.internetPingDestination ? 300 : 2) }
+        let pinger = StubPinger { host in Self.ping(host, average: NetworkSource.internetPingDestinations.contains(host) ? 300 : 2) }
         #expect(try await Self.source(pinger: pinger).onlyItem().status == .warning(reason: "High latency"))
+    }
+
+    /// 1つの事業者への経路だけが遅い回線でも、ほかの宛先に速く届けば遅延とはしない
+    @Test func slowRouteToOneDestinationIsNotHighLatency() async throws {
+        let pinger = StubPinger { host in Self.ping(host, average: host == "1.1.1.1" ? 300 : 10) }
+        let item = try await Self.source(pinger: pinger).onlyItem()
+        #expect(item.status == .ok)
+        #expect(item.networkHealth?.internetPing?.destination == "8.8.8.8")
+    }
+
+    /// ロスがあると届いた分だけの平均になるので、遅延よりロスの少なさで選ぶ
+    @Test func bestInternetPingPrefersLowerLoss() {
+        let lossy = NetworkHealth.PingResult(destination: "1.1.1.1", receivedCount: 5, lossRate: 0.5, averageMilliseconds: 5)
+        let slow = NetworkHealth.PingResult(destination: "8.8.8.8", receivedCount: 10, lossRate: 0, averageMilliseconds: 50)
+        #expect(NetworkSource.bestInternetPing(of: [lossy, slow]) == slow)
+        #expect(NetworkSource.bestInternetPing(of: []) == nil)
+    }
+
+    /// 同じ結果なら先に並んだ宛先を選び、チェックのたびに表示の宛先が入れ替わらないようにする
+    @Test func bestInternetPingKeepsOrderOnTie() {
+        let first = NetworkHealth.PingResult(destination: "1.1.1.1", receivedCount: 0, lossRate: 1, averageMilliseconds: nil)
+        let second = NetworkHealth.PingResult(destination: "8.8.8.8", receivedCount: 0, lossRate: 1, averageMilliseconds: nil)
+        #expect(NetworkSource.bestInternetPing(of: [first, second]) == first)
     }
 
     @Test func speedTestSnapshotGoesIntoHealth() async throws {
@@ -106,7 +129,7 @@ struct NetworkSourceTests {
     /// 確認を始めた後に速度の計測が始まると、遅い ping を計測のせいと見なせず要確認にしてしまうので、後で読んだ計測中も効かせる
     @Test func speedTestStartedDuringChecksCountsAsTesting() async throws {
         let calls = Mutex(0)
-        let pinger = StubPinger { host in Self.ping(host, average: host == NetworkSource.internetPingDestination ? 300 : 2) }
+        let pinger = StubPinger { host in Self.ping(host, average: NetworkSource.internetPingDestinations.contains(host) ? 300 : 2) }
         let source = Self.source(pinger: pinger, speedTest: {
             let isMeasuring = calls.withLock { count in
                 count += 1
@@ -127,7 +150,7 @@ struct NetworkSourceTests {
         let pinger = StubPinger()
         let gateway = GatewayInfo(routerAddress: nil, dnsServers: [])
         let item = try await Self.source(gateway: gateway, pinger: pinger).onlyItem()
-        #expect(pinger.hosts == [NetworkSource.internetPingDestination])
+        #expect(pinger.hosts == NetworkSource.internetPingDestinations.sorted())
         guard case .network(let health) = item.detail else {
             Issue.record("詳細がネットワークではない")
             return

@@ -126,7 +126,7 @@ extension ItemDetailView {
     }
 
     /**
-     ルーターと外部（1.1.1.1）への ping のロス率。平均の遅延は経路図に出す。ICMP を落とすルーターは多く、インターネットに届いていれば問題ではないので、
+     ルーターと外部への ping のロス率。平均の遅延は経路図に出す。ICMP を落とすルーターは多く、インターネットに届いていれば問題ではないので、
      その場合は原因の色を付けずに「ping に応答しません」と添えるだけにする
      */
     struct PacketLossSection: View {
@@ -150,7 +150,7 @@ extension ItemDetailView {
                 }
 
                 MetricRow(
-                    title: "Internet (\(NetworkSource.internetPingDestination))",
+                    title: "Internet (\(internetPing?.destination ?? NetworkSource.internetPingDestinations.joined(separator: ", ")))",
                     value: internetPing.map { NetworkHealth.packetLossText($0.lossRate) } ?? NetworkHealth.placeholder,
                     highlight: cause.highlight(for: [.packetLoss])
                 )

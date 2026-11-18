@@ -124,7 +124,7 @@ extension MonitoredItem {
             routerAddress: "192.168.1.1",
             dnsServers: ["192.168.1.1"],
             routerPing: .init(destination: "192.168.1.1", receivedCount: 10, lossRate: 0, averageMilliseconds: 3.4),
-            internetPing: .init(destination: NetworkSource.internetPingDestination, receivedCount: 10, lossRate: 0, averageMilliseconds: 12.8),
+            internetPing: .init(destination: NetworkSource.internetPingDestinations[0], receivedCount: 10, lossRate: 0, averageMilliseconds: 12.8),
             dnsLookup: .resolved(milliseconds: 18),
             internetAccess: .reachable,
             wifi: .init(
@@ -475,7 +475,7 @@ extension MonitoredItem {
             routerAddress: "192.168.1.1",
             dnsServers: ["192.168.1.1", "1.1.1.1"],
             routerPing: .init(destination: "192.168.1.1", receivedCount: 0, lossRate: 1, averageMilliseconds: nil),
-            internetPing: .init(destination: NetworkSource.internetPingDestination, receivedCount: 8, lossRate: 0.2, averageMilliseconds: 48.6),
+            internetPing: .init(destination: NetworkSource.internetPingDestinations[0], receivedCount: 8, lossRate: 0.2, averageMilliseconds: 48.6),
             dnsLookup: .resolved(milliseconds: 24),
             internetAccess: .reachable,
             wifi: .init(

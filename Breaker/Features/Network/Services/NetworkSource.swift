@@ -15,8 +15,12 @@ struct SpeedTestSnapshot: Hashable, Sendable {
 struct NetworkSource: ItemSource {
     typealias SpeedTestProvider = @Sendable () async -> SpeedTestSnapshot
 
-    /// 外部への ping の宛先。DNS が壊れていても届くよう、名前ではなくアドレスにする
-    static let internetPingDestination = "1.1.1.1"
+    /**
+     外部への ping の宛先。DNS が壊れていても届くよう、名前ではなくアドレスにする。
+     ISP と1つの事業者の間の経路だけが遠回りしていることがある（KDDI 系の回線で 1.1.1.1 だけ 100 ms を超えた）ので、
+     事業者の違う宛先を並べ、一番よく届いたものを回線の様子とする
+     */
+    static let internetPingDestinations = ["1.1.1.1", "8.8.8.8"]
 
     let kind = MonitoredItem.Kind.network
 
@@ -79,7 +83,7 @@ struct NetworkSource: ItemSource {
         var internetAccess: NetworkHealth.InternetAccess?
         if path.status != .unsatisfied {
             async let router = pingRouter(gateway.routerAddress)
-            async let internet = pinger.ping(Self.internetPingDestination)
+            async let internet = pingInternet()
             async let lookup = dnsResolver.lookup()
             async let access = internetProbe.probe()
             (routerPing, internetPing, dnsLookup, internetAccess) = try await (router, internet, lookup, access)
@@ -102,6 +106,30 @@ struct NetworkSource: ItemSource {
             lastSpeedTest: speedAfter.lastRecord,
             isTestingSpeed: speedBefore.isMeasuring || speedAfter.isMeasuring
         )
+    }
+
+    private func pingInternet() async throws -> NetworkHealth.PingResult? {
+        try await withThrowingTaskGroup(of: (Int, NetworkHealth.PingResult).self) { group in
+            for (index, destination) in Self.internetPingDestinations.enumerated() {
+                group.addTask { (index, try await pinger.ping(destination)) }
+            }
+            // 終わった順ではなく宛先の順に並べる。同じ結果のとき選ぶ宛先が毎回変わらないようにするため
+            var results = [NetworkHealth.PingResult?](repeating: nil, count: Self.internetPingDestinations.count)
+            for try await (index, result) in group {
+                results[index] = result
+            }
+            return Self.bestInternetPing(of: results.compactMap { $0 })
+        }
+    }
+
+    /**
+     ロスが少ないものを先に選ぶ（ロスがあると届いた分だけの平均になり、遅延を比べても当てにならない）。
+     同じなら先に並んだものを選ぶ
+     */
+    static func bestInternetPing(of results: [NetworkHealth.PingResult]) -> NetworkHealth.PingResult? {
+        results.min { lhs, rhs in
+            (lhs.lossRate, lhs.averageMilliseconds ?? .infinity) < (rhs.lossRate, rhs.averageMilliseconds ?? .infinity)
+        }
     }
 
     /// ルーターのアドレスが無い（経路が VPN だけなど）ときは打つ先が無いので、測っていない（nil）とする
