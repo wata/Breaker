@@ -3,6 +3,18 @@
     <channel>
         <title>Breaker</title>
         <item>
+            <title>1.3.1</title>
+            <pubDate>Thu, 19 Nov 2026 05:09:36 +0900</pubDate>
+            <sparkle:version>9</sparkle:version>
+            <sparkle:shortVersionString>1.3.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <description sparkle:format="markdown"><![CDATA[- New: hover over the speed and CPU charts, the storage bar or a launchd job's timeline to see the values right away — the time and speeds, the CPU of your Mac and the app at fault, a folder's size, or a scheduled, last or next run.
+- The CPU of your whole Mac is now shown as a share of all cores (0–100%), the same as Activity Monitor's System and User. Each app's CPU still uses 100% = one core.
+- Fixed: the network no longer warns about high latency when only the route to 1.1.1.1 is slow. Breaker now also pings 8.8.8.8 and uses the better result.
+]]></description>
+            <enclosure url="https://github.com/wata/Breaker/releases/download/1.3.1/Breaker-1.3.1.zip" length="5937499" type="application/octet-stream" sparkle:edSignature="iy+IbXwgmEVWspQeeYhVQ0OZWZ3YxHAJPABhMFtCPfh+IlQ3heCh9BbX/0N7kAryVLzUd0MJHYfGQTH19GRfCw=="/>
+        </item>
+        <item>
             <title>1.3.0</title>
             <pubDate>Thu, 19 Nov 2026 04:36:22 +0900</pubDate>
             <sparkle:version>8</sparkle:version>
