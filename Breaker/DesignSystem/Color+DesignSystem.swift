@@ -20,6 +20,26 @@ extension Color {
         static let upload = Color.purple
     }
 
+    /**
+     負荷の推移のグラフ。全体の面は背景に退かせ、原因のアプリの線だけを目立たせる。
+     線は状態の色（橙・赤）と取り違えないよう青にする。アクセント色は利用者が橙や赤に変えられるので使わない
+     */
+    enum LoadChart {
+        static let total = Color(nsColor: .tertiaryLabelColor)
+        static let highlight = Color.blue
+    }
+
+    /**
+     ストレージの内訳のバーと、一覧の行の頭の点。場所ごとに色を変えてバーと行を結ぶ。
+     橙・赤は状態と「増えた分」に使っているので避ける。上位の場所の数（`StorageScan.listedLocationCount`）だけ用意する
+     */
+    enum StorageBar {
+        static let locations: [Color] = [.blue, .purple, .teal, .indigo, .brown, .mint]
+        /// 一覧に出ない場所とシステム・アプリなど、測っていない使用中の領域
+        static let other = Color(nsColor: .systemGray)
+        static let available = Color(nsColor: .quaternaryLabelColor)
+    }
+
     /// 一度だけの設定の案内（ログイン項目の許可待ち）に添える記号。異常の色（`Status`）と競わないよう、橙ではなく黄にする
     static let caution = Color.yellow
 

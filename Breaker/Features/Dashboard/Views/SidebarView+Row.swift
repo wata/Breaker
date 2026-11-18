@@ -44,17 +44,29 @@ extension SidebarView {
 
 extension MonitoredItem {
     /**
-     サイドバーの行の2行目。理由のある状態（異常・停止・未確認）は理由、正常・実行中は次回、次回が無ければ前回を出す（ネットワークは速度と遅延の要約）。
+     サイドバーの行の2行目。理由のある状態（異常・停止・未確認）は理由、正常・実行中は次回、次回が無ければ前回を出す
+     （ネットワークは速度と遅延、負荷は CPU といちばん使っているアプリ、ストレージは空きの要約）。
      前回と次回を並べるのは詳細の概要に任せる。予定で動かない種類の正常（フォルダアクション）は、
      状態の記号のほかに言うことが無いので2行目を出さない
      */
     func rowDetail(now: Date, showsKind: Bool, calendar: Calendar = .current, locale: Locale = .current) -> String? {
+        // ネットワーク・負荷・ストレージは名前が種類の名前そのものなので、種類を添えると同じ語が2回並ぶ
         if let reason = status.reason {
-            return showsKind ? Self.joined(kind.shortTitle, reason, locale: locale) : reason
+            return showsKind && name != kind.shortTitle ? Self.joined(kind.shortTitle, reason, locale: locale) : reason
         }
-        // ネットワークは予定で動かないので、前回・次回の代わりに速度と遅延の要約を出す
-        if case .network(let health) = detail {
+        // 予定で動かない種類は、前回・次回の代わりに今の値の要約を出す
+        switch detail {
+        case .network(let health):
             return health.summary(locale: locale)
+
+        case .systemLoad(let load):
+            return load.summary(locale: locale)
+
+        case .storage(let usage):
+            return usage.summary(locale: locale)
+
+        case .launchdJob, .cronJob, .folderAction, .sourceFailure:
+            break
         }
         guard let dates = runDates(now: now) else {
             return nil

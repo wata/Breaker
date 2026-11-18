@@ -33,7 +33,8 @@ struct NetworkHealthTests {
         #expect(item.id == "network:network")
         #expect(item.isHomeItem)
         #expect(item.controlActions.isEmpty)
-        #expect(item.promptAction == nil)
+        // 正常でも遅さなどを AI に聞けるよう、プロンプトはいつでもコピーできる
+        #expect(item.promptAction?.isEnabled == true)
         #expect(item.recoveryAction == nil)
         #expect(item.fileActions().isEmpty)
     }

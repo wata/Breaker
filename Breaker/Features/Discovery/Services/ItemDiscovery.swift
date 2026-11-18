@@ -9,8 +9,8 @@ struct ItemDiscovery: Sendable {
     }
 
     /**
-     ネットワーク以外の Source。ネットワークは速度計測のスケジューラと結ぶ必要があるので、`AppDelegate` が末尾に足す。
-     テストやプレビューで `ItemDiscovery()` を作っても ping や NWPathMonitor を走らせない。Source は状態を持つので呼ぶたびに作る
+     ネットワーク・負荷・ストレージ以外の Source。ネットワークとストレージは計測・走査のスケジューラと結ぶ必要があるので、`AppDelegate` が末尾に足す。
+     テストやプレビューで `ItemDiscovery()` を作っても ping・NWPathMonitor・ps を走らせない。Source は状態を持つので呼ぶたびに作る
      */
     static var standardSources: [any ItemSource] {
         [LaunchAgentSource(), CronSource(), FolderActionSource()]

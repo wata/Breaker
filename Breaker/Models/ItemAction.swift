@@ -46,7 +46,7 @@ struct ItemAction: Identifiable, Hashable, Sendable {
         ]
     }
 
-    /// launchd ジョブと cron 以外を選んでいるときにメニューバーの「項目」で無効で見せる。`MonitoredItem.promptAction` に名前と絵を合わせる
+    /// プロンプトを出さない項目（フォルダアクション・検出の失敗）を選んでいるときや、未選択のときにメニューバーの「項目」で無効で見せる。`MonitoredItem.promptAction` に名前と絵を合わせる
     static var unavailablePromptAction: ItemAction {
         ItemAction(title: copyPromptTitle, systemImage: copyPromptSystemImage, operation: .unavailable, isEnabled: false)
     }
@@ -74,9 +74,12 @@ extension ItemAction {
         String(localized: "Copy Prompt for AI", comment: "Action that copies a prompt asking an AI assistant to investigate why the selected item fails")
     }
 
-    /// HIG がコピーに充てている絵
+    /**
+     ただのコピーの絵（`document.on.document`）では AI 向けだと分からないので、AI の記号として広く通じる光の印にする（利用者の判断）。
+     コピーできたことは、押した後のチェックマークで伝える
+     */
     static var copyPromptSystemImage: String {
-        "document.on.document"
+        "sparkles"
     }
 }
 
@@ -120,14 +123,16 @@ extension MonitoredItem {
                 ItemAction(title: ItemAction.stopTitle, systemImage: "pause.circle", operation: .unavailable, isEnabled: false),
             ]
 
-        case .folderAction, .network, .sourceFailure:
+        case .folderAction, .network, .systemLoad, .storage, .sourceFailure:
             []
         }
     }
 
     /**
      失敗を AI に調べさせるプロンプトのコピー。状態を変えないので `controlActions` に入れず、サイドバーの右クリックメニューにも出さない。
-     ツールバーとメニューバーの「項目」の組は状態で変えない方針なので、launchd ジョブと cron では常に出し、調べることのない正常時は無効にする
+     ツールバーとメニューバーの「項目」の組は状態で変えない方針なので、launchd ジョブと cron では常に出し、調べることのない正常時は無効にする。
+     ネットワーク・負荷・ストレージは Mac の今の状態を見る項目で、判定が正常でも利用者が「遅い」「唸っている」と気づいて聞きたいことがあるので、
+     いつでも押せるようにする
      */
     var promptAction: ItemAction? {
         switch detail {
@@ -139,7 +144,10 @@ extension MonitoredItem {
                 isEnabled: status.isAbnormal
             )
 
-        case .folderAction, .network, .sourceFailure:
+        case .network, .systemLoad, .storage:
+            ItemAction(title: ItemAction.copyPromptTitle, systemImage: ItemAction.copyPromptSystemImage, operation: .copyPrompt(self))
+
+        case .folderAction, .sourceFailure:
             nil
         }
     }
@@ -204,7 +212,7 @@ extension MonitoredItem {
             }
             return nil
 
-        case .folderAction, .network, .sourceFailure:
+        case .folderAction, .network, .systemLoad, .storage, .sourceFailure:
             return nil
         }
     }
@@ -242,7 +250,7 @@ extension MonitoredItem {
                     ItemAction(title: String(localized: "Show \(url.lastPathComponent) in Finder"), systemImage: "magnifyingglass", operation: .reveal(url))
                 }
 
-        case .network, .sourceFailure:
+        case .network, .systemLoad, .storage, .sourceFailure:
             []
         }
     }

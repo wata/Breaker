@@ -28,6 +28,12 @@ enum Layout {
     static let chartLineWidth: CGFloat = 2
     /// 上りの線の破線。色だけに頼らず下りと見分けられるようにする
     static let chartLineDash: [CGFloat] = [3, 3]
+    /// ストレージの内訳のバーの高さ。細い場所の色も見分けられる太さ
+    static let storageBarHeight: CGFloat = 12
+    /// ストレージの一覧の行の頭の点と、バーの説明の点。小さくても色が読み取れる大きさ
+    static let legendDotSize: CGFloat = 8
+    /// 負荷の詳細でアプリの名前に添えるアイコン。行の文字（13pt）と並んで行の高さを変えない大きさ
+    static let appIconSize: CGFloat = 16
     /// launchd の詳細のタイムラインの軌道の行。印（`timelineMarkerDiameter`）と、その下の目盛りの刻みが収まる高さ
     static let timelineHeight: CGFloat = 22
     /// タイムラインの軌道の太さ。予定の印（`timelineRunDiameter`）より細くして、印を軌道に載せて見せる

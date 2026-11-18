@@ -13,6 +13,8 @@ extension ItemDetailView {
         let files: [ItemAction]
         /// ネットワーク項目のときだけ。計測は `ItemActionPerformer` ではなくスケジューラが受け持つので、操作の組とは別に渡す
         let measure: MeasureButton.Model?
+        /// ストレージ項目のときだけ。走査も `ItemActionPerformer` ではなく走査のスケジューラが受け持つ
+        let scan: StorageScanScheduler?
         let isLocked: Bool
         let perform: (ItemAction) -> Void
 
@@ -20,6 +22,10 @@ extension ItemDetailView {
             ToolbarItemGroup {
                 if let measure {
                     MeasureButton(model: measure)
+                }
+
+                if let scan {
+                    ScanButton(scheduler: scan)
                 }
 
                 ForEach(controls) { action in
@@ -91,6 +97,38 @@ extension ItemDetailView {
                 String(localized: "Measures with networkQuality. Each speed test sends and receives about 300 MB.", comment: "Help tag of the Measure Now button in the network detail")
             } else {
                 String(localized: "Connect to a network to measure.", comment: "Help tag of the Measure Now button while offline")
+            }
+            return "\(title)\n\(detail)"
+        }
+    }
+
+    /// ストレージの「今すぐ調べる」。計測と同じく、走査中は進み具合の印に替えて押せなくし、何をするかと走査中であることをツールチップで伝える
+    struct ScanButton: View {
+        let scheduler: StorageScanScheduler
+
+        var body: some View {
+            Button {
+                Task {
+                    await scheduler.scanNow()
+                }
+            } label: {
+                if scheduler.isScanning {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Label("Scan Now", systemImage: "arrow.clockwise")
+                }
+            }
+            .help(help)
+            .disabled(scheduler.isScanning)
+        }
+
+        private var help: String {
+            let title = String(localized: "Scan Now", comment: "Button that measures the sizes of storage locations now")
+            let detail = if scheduler.isScanning {
+                String(localized: "Scanning… This can take a few minutes.", comment: "Shown while the storage locations are measured")
+            } else {
+                String(localized: "Measures locations that often grow, such as Xcode DerivedData and caches. Takes up to a few minutes.", comment: "Help tag of the Scan Now button in the storage detail")
             }
             return "\(title)\n\(detail)"
         }

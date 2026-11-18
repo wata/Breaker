@@ -36,7 +36,7 @@ private struct MainWindow: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        ContentView(appModel: appDelegate.appModel, speedTestScheduler: appDelegate.speedTestScheduler)
+        ContentView(appModel: appDelegate.appModel, speedTestScheduler: appDelegate.speedTestScheduler, storageScanScheduler: appDelegate.storageScanScheduler)
             .onAppear {
                 appDelegate.openMainWindow = {
                     openWindow(id: BreakerApp.mainWindowID)
@@ -54,11 +54,17 @@ private struct MainWindow: View {
 final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     let appModel: AppModel
     let speedTestScheduler: SpeedTestScheduler
+    let storageScanScheduler: StorageScanScheduler
     let updater = AppUpdater()
     var openMainWindow: (() -> Void)?
 
     override init() {
-        (appModel, speedTestScheduler) = AppEnvironment.usesSampleData() ? (.sampleData(), .sampleData()) : Self.makeLiveModels()
+        let models = AppEnvironment.usesSampleData()
+            ? Models(appModel: .sampleData(), speedTestScheduler: .sampleData(), storageScanScheduler: .sampleData())
+            : Self.makeLiveModels()
+        appModel = models.appModel
+        speedTestScheduler = models.speedTestScheduler
+        storageScanScheduler = models.storageScanScheduler
         super.init()
     }
 
@@ -74,14 +80,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         UNUserNotificationCenter.current().delegate = self
         appModel.startMonitoring(reporter: reporter)
         speedTestScheduler.start()
+        storageScanScheduler.start()
         Task {
             await reporter.requestAuthorization()
         }
     }
 
-    /// 計測中の networkQuality はアプリと一緒に終わらないので、ここで止める
+    /// 計測中の networkQuality と走査中の du はアプリと一緒に終わらないので、ここで止める
     func applicationWillTerminate(_ notification: Notification) {
         speedTestScheduler.stop()
+        storageScanScheduler.stop()
     }
 
     /// ウインドウを閉じても常駐して定期チェックと通知を続け、Dock から再度開けるようにする
@@ -118,14 +126,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     /**
      `NetworkSource` は揺れ止めの記録を、検出の Source は取り直しをまたぐ履歴を持つので、1つずつ作って持ち続ける。
      NetworkSource は計測の状態を読み、スケジューラは最新の接続チェックを条件にして終わったら一覧を取り直すので互いを参照し合う。
-     スケジューラだけを作り終えてから入れて輪を解く
+     スケジューラだけを作り終えてから入れて輪を解く。ストレージの走査も同じ形で結ぶ。
+     負荷とストレージも、テストやプレビューで ps や du を走らせないよう、ネットワークと同じくここで足す
      */
-    private static func makeLiveModels() -> (AppModel, SpeedTestScheduler) {
+    private static func makeLiveModels() -> Models {
         let schedulerReference = WeakReference<SpeedTestScheduler>()
+        let scannerReference = WeakReference<StorageScanScheduler>()
         let networkSource = NetworkSource(speedTest: { @MainActor in
             schedulerReference.object?.snapshot ?? .idle
         })
-        let discovery = ItemDiscovery(sources: ItemDiscovery.standardSources + [networkSource])
+        let storageSource = StorageSource(scan: { @MainActor in
+            scannerReference.object?.lastScan
+        })
+        let discovery = ItemDiscovery(sources: ItemDiscovery.standardSources + [networkSource, SystemLoadSource(), storageSource])
         let appModel = AppModel(discover: { await discovery.items() })
         let scheduler = SpeedTestScheduler(
             conditions: { SpeedTestScheduler.Conditions(latestCheck: await networkSource.latestCheck()) },
@@ -133,9 +146,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                 await appModel?.refresh()
             }
         )
+        let storageScanScheduler = StorageScanScheduler(onFinish: { [weak appModel] in
+            await appModel?.refresh()
+        })
         schedulerReference.object = scheduler
-        return (appModel, scheduler)
+        scannerReference.object = storageScanScheduler
+        return Models(appModel: appModel, speedTestScheduler: scheduler, storageScanScheduler: storageScanScheduler)
     }
+}
+
+/// アプリの起動に合わせて作り、ウインドウと設定で共有する状態の組
+@MainActor
+private struct Models {
+    let appModel: AppModel
+    let speedTestScheduler: SpeedTestScheduler
+    let storageScanScheduler: StorageScanScheduler
 }
 
 /// 互いを参照し合う部品を、作り終えてから結ぶための入れ物

@@ -150,4 +150,25 @@ extension String {
     fileprivate func trimmingSuffix(_ suffix: String) -> String {
         hasSuffix(suffix) ? String(dropLast(suffix.count)) : self
     }
+
+    /// 正常な項目は問題の調査ではなく今の状態の見立てを頼み、画面の値を英語の書式で渡す
+    @Test func healthyNetworkAsksForAssessment() async {
+        let prompt = await AIPrompt.make(for: MonitoredItem.sampleNetwork)
+        #expect(prompt.contains("shows the current state of the network health check below"))
+        #expect(!prompt.contains("reports a problem"))
+        #expect(prompt.contains("Ping 1.1.1.1: 13 ms, 0% loss"))
+        #expect(prompt.contains("Last speed test: down 146 Mbps, up 132 Mbps"))
+    }
+
+    /// 負荷は原因のアプリといつからを、ストレージは場所ごとの大きさと増えた分を渡す
+    @Test func loadAndStoragePromptsCarryTheCause() async {
+        let load = await AIPrompt.make(for: MonitoredItem.sampleSystemLoad)
+        #expect(load.contains("reports a problem with the system load check below"))
+        #expect(load.contains("  Example Reel: 68%"))
+        #expect(load.contains("High usage started: "))
+
+        let storage = await AIPrompt.make(for: MonitoredItem.sampleStorage)
+        #expect(storage.contains("Startup disk: 82 GB available of 994 GB"))
+        #expect(storage.contains("  /Users/me/Library/Developer/Xcode/DerivedData: 148 GB, +36 GB since previous"))
+    }
 }

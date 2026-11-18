@@ -4,6 +4,9 @@ struct MonitoredItem: Identifiable, Hashable, Sendable {
     enum Kind: String, CaseIterable, Sendable {
         /// 自動化ではないが、つながらないと他の項目も動かないので、要確認の次（一覧の先頭）に置く
         case network
+        /// ネットワークと同じく自動化ではないが、負荷やディスクの不足はほかの項目も巻き込んで壊すので、ネットワークの次に置く
+        case systemLoad
+        case storage
         case launchdJob
         case cronJob
         case folderAction
@@ -14,6 +17,8 @@ struct MonitoredItem: Identifiable, Hashable, Sendable {
         case cronJob(CronJob)
         case folderAction(FolderAction)
         case network(NetworkHealth)
+        case systemLoad(SystemLoad)
+        case storage(StorageUsage)
         /// その種類の検出自体が失敗した（osascript が拒否された等）。他の種類の表示は続ける
         case sourceFailure(Kind)
     }
@@ -112,7 +117,7 @@ struct MonitoredItem: Identifiable, Hashable, Sendable {
         case .launchdJob(let job):
             job.isHomeJob
 
-        case .cronJob, .folderAction, .network, .sourceFailure:
+        case .cronJob, .folderAction, .network, .systemLoad, .storage, .sourceFailure:
             true
         }
     }
@@ -120,7 +125,7 @@ struct MonitoredItem: Identifiable, Hashable, Sendable {
     /**
      通知・Dock バッジ・異常の件数に数える異常。ホームのジョブ以外の launchd ジョブは利用者が直すものではないので、一覧の色だけで見せる。
      ネットワークの要確認（遅延・ロス・Wi-Fi が弱い・計測の失敗・ログイン画面）は回線や場所しだいで出入りし、そのたびに知らせると煩いので、
-     つながらない失敗だけを数える
+     つながらない失敗だけを数える。負荷とストレージの要確認は、続いている負荷・減った空きのように放っておくと直らないものだけなので数える
      */
     var isReportedAbnormal: Bool {
         if case .network = detail {
@@ -145,6 +150,12 @@ extension MonitoredItem.Detail {
 
         case .network:
             .network
+
+        case .systemLoad:
+            .systemLoad
+
+        case .storage:
+            .storage
 
         case .sourceFailure(let kind):
             kind
@@ -185,6 +196,12 @@ extension MonitoredItem.Kind {
 
         case .network:
             Self.networkTitle
+
+        case .systemLoad:
+            Self.systemLoadTitle
+
+        case .storage:
+            Self.storageTitle
         }
     }
 
@@ -202,6 +219,12 @@ extension MonitoredItem.Kind {
 
         case .network:
             Self.networkTitle
+
+        case .systemLoad:
+            Self.systemLoadTitle
+
+        case .storage:
+            Self.storageTitle
         }
     }
 
@@ -209,16 +232,24 @@ extension MonitoredItem.Kind {
     private static var networkTitle: String {
         String(localized: "Network", comment: "The network health check: the sidebar section title, and the kind shown before the reason in the sidebar's Needs Attention section")
     }
+
+    private static var systemLoadTitle: String {
+        String(localized: "System Load", comment: "The CPU, heat and memory check: the sidebar section title, and the kind shown before the reason in the sidebar's Needs Attention section")
+    }
+
+    private static var storageTitle: String {
+        String(localized: "Storage", comment: "The startup disk free space check: the sidebar section title, and the kind shown before the reason in the sidebar's Needs Attention section")
+    }
 }
 
 extension MonitoredItem {
-    /// 何のための項目かを書き留める説明の欄を出すか。ネットワークと検出の失敗の行は利用者が置いた自動化ではないので、書くことが無い
+    /// 何のための項目かを書き留める説明の欄を出すか。ネットワーク・負荷・ストレージと検出の失敗の行は利用者が置いた自動化ではないので、書くことが無い
     var acceptsNote: Bool {
         switch detail {
         case .launchdJob, .cronJob, .folderAction:
             true
 
-        case .network, .sourceFailure:
+        case .network, .systemLoad, .storage, .sourceFailure:
             false
         }
     }
@@ -226,6 +257,14 @@ extension MonitoredItem {
     var networkHealth: NetworkHealth? {
         if case .network(let health) = detail {
             health
+        } else {
+            nil
+        }
+    }
+
+    var storageUsage: StorageUsage? {
+        if case .storage(let usage) = detail {
+            usage
         } else {
             nil
         }

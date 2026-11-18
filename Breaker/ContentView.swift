@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @Bindable var appModel: AppModel
     let speedTestScheduler: SpeedTestScheduler
+    let storageScanScheduler: StorageScanScheduler
 
     var body: some View {
         NavigationSplitView {
@@ -16,6 +17,7 @@ struct ContentView: View {
                     actingItemID: appModel.actingItemID,
                     note: appModel.itemNotes[item.id],
                     speedTestScheduler: speedTestScheduler,
+                    storageScanScheduler: storageScanScheduler,
                     saveNote: { appModel.saveNote($0, for: item) }
                 ) { action in
                     Task {
@@ -58,12 +60,13 @@ struct ContentView: View {
             Text(message)
         }
         .frame(minWidth: Layout.minWindowWidth, minHeight: Layout.minWindowHeight)
-        // メニューバーの「項目」「表示」が、このウインドウが手前にあるときだけ選択と絞り込み・速度の計測を扱えるようにする
+        // メニューバーの「項目」「表示」が、このウインドウが手前にあるときだけ選択と絞り込み・速度の計測・ストレージの走査を扱えるようにする
         .focusedSceneValue(appModel)
         .focusedSceneValue(speedTestScheduler)
+        .focusedSceneValue(storageScanScheduler)
     }
 }
 
 #Preview {
-    ContentView(appModel: .preview(selectedID: MonitoredItem.samples[2].id), speedTestScheduler: .sampleData())
+    ContentView(appModel: .preview(selectedID: MonitoredItem.samples[2].id), speedTestScheduler: .sampleData(), storageScanScheduler: .sampleData())
 }

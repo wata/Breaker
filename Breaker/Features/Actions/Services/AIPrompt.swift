@@ -2,6 +2,7 @@ import Foundation
 
 /**
  失敗した項目を AI に調べさせるプロンプト。ジョブ名・定義・ログを手で集めて貼る手間を省く。
+ ネットワーク・負荷・ストレージは正常でも聞けるので、異常が無ければ問題の調査ではなく今の状態の見立てを頼む。
  本文は英語に固定してローカライズしない。AI は利用者の言語で答えるので、訳す必要がない
  */
 enum AIPrompt {
@@ -26,7 +27,7 @@ enum AIPrompt {
             }
             sections.append("cd \(shellQuoted(path))")
         }
-        sections.append("Breaker, a macOS app that monitors launchd jobs and cron jobs, reports a problem with the \(kindName(of: item)) below. Find the cause and suggest a fix.")
+        sections.append(request(for: item))
         sections.append(details(of: item, home: home, fileManager: fileManager).joined(separator: "\n"))
         sections.append(await logSection(of: logFiles(of: item)))
         return sections.joined(separator: "\n\n")
@@ -48,7 +49,7 @@ enum AIPrompt {
         case .cronJob(let job):
             script = job.scriptURL(fileManager: fileManager)
 
-        case .folderAction, .network, .sourceFailure:
+        case .folderAction, .network, .systemLoad, .storage, .sourceFailure:
             script = nil
         }
         guard let folder = script?.deletingLastPathComponent() else {
@@ -72,6 +73,15 @@ enum AIPrompt {
         }
     }
 
+    private static func request(for item: MonitoredItem) -> String {
+        let app = "Breaker, a macOS app that monitors launchd jobs, cron jobs, the network, CPU load and storage,"
+        if item.status.isAbnormal {
+            return "\(app) reports a problem with the \(kindName(of: item)) below. Find the cause and suggest a fix."
+        } else {
+            return "\(app) shows the current state of the \(kindName(of: item)) below. Point out anything unusual, explain the likely cause, and suggest what to check or do."
+        }
+    }
+
     private static func kindName(of item: MonitoredItem) -> String {
         switch item.kind {
         case .launchdJob:
@@ -85,6 +95,12 @@ enum AIPrompt {
 
         case .network:
             "network health check"
+
+        case .systemLoad:
+            "system load check"
+
+        case .storage:
+            "storage check"
         }
     }
 
@@ -121,8 +137,79 @@ enum AIPrompt {
                 lines.append("Script: \(script.path(percentEncoded: false))")
             }
 
-        case .folderAction, .network, .sourceFailure:
+        case .network(let health):
+            lines += networkDetails(of: health)
+
+        case .systemLoad(let load):
+            lines += systemLoadDetails(of: load)
+
+        case .storage(let usage):
+            lines += storageDetails(of: usage)
+
+        case .folderAction, .sourceFailure:
             break
+        }
+        return lines
+    }
+
+    /// 値の書式は画面と同じものを使い、言語だけ本文に合わせて英語にする
+    private static let english = Locale(identifier: "en_US")
+
+    private static func networkDetails(of health: NetworkHealth) -> [String] {
+        var lines = [
+            "Connection: \(health.pathStatus.title), \(health.interface.title)\(health.isExpensive ? ", expensive" : "")\(health.isConstrained ? ", Low Data Mode" : "")",
+            "Router: \(health.routerAddress ?? "unknown")",
+            "DNS servers: \(health.dnsServers.isEmpty ? "none" : health.dnsServers.joined(separator: ", "))",
+        ]
+        for ping in [health.routerPing, health.internetPing].compactMap({ $0 }) {
+            let average = ping.averageMilliseconds.map { NetworkHealth.latencyText(milliseconds: $0, locale: english) } ?? "no reply"
+            lines.append("Ping \(ping.destination): \(average), \(NetworkHealth.packetLossText(ping.lossRate, locale: english))")
+        }
+        if let lookup = health.dnsLookup {
+            lines.append("DNS lookup: \(lookup.title(locale: english))\(lookup.failureReason.map { " (\($0))" } ?? "")")
+        }
+        if let access = health.internetAccess {
+            lines.append("Internet access: \(access.title)\(access.failureReason.map { " (\($0))" } ?? "")")
+        }
+        if let wifi = health.wifi {
+            let details = [wifi.bandText(locale: english), wifi.standardText(locale: english)].compactMap { $0 }.joined(separator: ", ")
+            lines.append("Wi-Fi: signal \(NetworkHealth.powerText(decibelMilliwatts: wifi.rssi, locale: english)), noise \(NetworkHealth.powerText(decibelMilliwatts: wifi.noise, locale: english)), channel \(wifi.channelText(locale: english)), \(details), transmit rate \(NetworkHealth.speedText(megabitsPerSecond: wifi.transmitRate, locale: english))")
+        }
+        if let speed = health.lastSpeedTest?.speed {
+            lines.append("Last speed test: down \(NetworkHealth.speedText(bitsPerSecond: speed.downloadBitsPerSecond, locale: english)), up \(NetworkHealth.speedText(bitsPerSecond: speed.uploadBitsPerSecond, locale: english))")
+        }
+        return lines
+    }
+
+    /// CPU の % の基準（1コア＝100%）とコア数を書き添え、全体に対する割合と取り違えさせない
+    private static func systemLoadDetails(of load: SystemLoad) -> [String] {
+        var lines = [
+            "CPU (100% = one core, \(load.coreCount) cores): \(SystemLoad.percentText(load.cpuPercent, locale: english))",
+            "Load average (1 min): \(load.loadAverage.formatted(.number.precision(.fractionLength(1)).locale(english)))",
+            "Thermal state: \(load.thermalState)",
+            "Memory pressure: \(load.memoryPressure)",
+            "Top processes, grouped by app (100% = one core):",
+        ]
+        lines += load.consumers.prefix(SystemLoad.listedConsumerCount).map { consumer in
+            "  \(consumer.name): \(SystemLoad.percentText(consumer.cpuPercent, locale: english))\(consumer.bundlePath.map { " (\($0))" } ?? "")"
+        }
+        if let since = load.culprit.flatMap({ LoadCheck.sinceDate(of: $0, in: load.history) }) {
+            lines.append("High usage started: \(since.formatted(.iso8601))")
+        }
+        return lines
+    }
+
+    private static func storageDetails(of usage: StorageUsage) -> [String] {
+        var lines = [
+            "Startup disk: \(StorageUsage.bytesText(usage.availableBytes, locale: english)) available of \(StorageUsage.bytesText(usage.capacityBytes, locale: english))",
+        ]
+        guard let scan = usage.scan else {
+            return lines
+        }
+        lines.append("Sizes of folders that often grow (measured \(scan.date.formatted(.iso8601))\(scan.previousDate.map { ", compared with \($0.formatted(.iso8601))" } ?? "")):")
+        lines += scan.locations.map { location in
+            let growth = location.growthBytes.map { ", \($0 >= 0 ? "+" : "-")\(StorageUsage.bytesText(abs($0), locale: english)) since previous" } ?? ""
+            return "  \(location.path): \(StorageUsage.bytesText(location.bytes, locale: english))\(growth)"
         }
         return lines
     }
@@ -135,7 +222,7 @@ enum AIPrompt {
         case .cronJob(let job):
             job.logFiles
 
-        case .folderAction, .network, .sourceFailure:
+        case .folderAction, .network, .systemLoad, .storage, .sourceFailure:
             []
         }
     }

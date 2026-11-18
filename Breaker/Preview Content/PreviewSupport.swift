@@ -110,6 +110,8 @@ extension MonitoredItem {
         ),
         sampleSourceFailure,
         sampleNetwork,
+        sampleSystemLoad,
+        sampleStorage,
     ]
 
     /// Wi-Fi で、どのチェックも正常なネットワーク。判定は実際の判定表に通して決める
@@ -536,4 +538,87 @@ extension SpeedTestRecord {
         }
         return earlier + [sample]
     }()
+}
+
+
+extension MonitoredItem {
+    /**
+     3時間前から1つのアプリが CPU を使い続けている負荷。記録は1分ごとに24時間分を作り、判定は実際の判定に通して決める。
+     ビルドのような短い山も混ぜ、短い山では鳴らないことをグラフで見比べられるようにする
+     */
+    static let sampleSystemLoad: MonitoredItem = {
+        let now = Date.now
+        let coreCount = 10
+        let history = (0..<(24 * 60)).reversed().map { minutesAgo in
+            let isBuilding = (minutesAgo + 60) % 180 < 6
+            let isStuck = minutesAgo < 3 * 60
+            let consumers = [
+                LoadSample.Consumer(name: "Example Reel", cpuPercent: isStuck ? 65 + Double(minutesAgo % 5) * 3 : 2),
+                LoadSample.Consumer(name: "Xcode", cpuPercent: isBuilding ? 450 : 10),
+                LoadSample.Consumer(name: "Safari", cpuPercent: 20 + Double(minutesAgo % 7) * 2),
+                LoadSample.Consumer(name: "WindowServer", cpuPercent: 30),
+            ]
+            .sorted { $0.cpuPercent > $1.cpuPercent }
+            return LoadSample(
+                date: now.addingTimeInterval(-Double(minutesAgo) * 60),
+                cpuPercent: consumers.reduce(20) { $0 + $1.cpuPercent },
+                consumers: consumers
+            )
+        }
+        let consumers = [
+            SystemLoad.Consumer(name: "Example Reel", bundlePath: nil, cpuPercent: 68),
+            SystemLoad.Consumer(name: "WindowServer", bundlePath: nil, cpuPercent: 30),
+            SystemLoad.Consumer(name: "Safari", bundlePath: "/Applications/Safari.app", cpuPercent: 24),
+            SystemLoad.Consumer(name: "Xcode", bundlePath: nil, cpuPercent: 10),
+        ]
+        let load = SystemLoad(
+            cpuPercent: history.last?.cpuPercent ?? 0,
+            coreCount: coreCount,
+            loadAverage: 3.2,
+            thermalState: .nominal,
+            memoryPressure: .normal,
+            consumers: consumers,
+            history: history
+        )
+        return MonitoredItem(key: "load", name: Kind.systemLoad.title, status: LoadCheck.finding(in: load, now: now)?.status ?? .ok, detail: .systemLoad(load))
+    }()
+
+    /// 空きが 10% を切った起動ディスク。走査の結果は `StorageScanScheduler.sampleData()` と同じものを持たせる
+    static let sampleStorage: MonitoredItem = {
+        let usage = StorageUsage(capacityBytes: 994_000_000_000, availableBytes: 82_000_000_000, scan: StorageScan.sample)
+        return MonitoredItem(key: "volume", name: Kind.storage.title, status: StorageSource.status(of: usage), detail: .storage(usage))
+    }()
+}
+
+extension StorageScan {
+    /// 前回から DerivedData とシミュレータが膨らんだ走査
+    static let sample = StorageScan(
+        date: .now.addingTimeInterval(-2 * 3600),
+        previousDate: .now.addingTimeInterval(-8 * 3600),
+        locations: [
+            .init(location: .derivedData, path: "/Users/me/Library/Developer/Xcode/DerivedData", bytes: 148_000_000_000, previousBytes: 112_000_000_000),
+            .init(location: .simulators, path: "/Users/me/Library/Developer/CoreSimulator", bytes: 64_000_000_000, previousBytes: 51_000_000_000),
+            .init(location: .caches, path: "/Users/me/Library/Caches", bytes: 38_000_000_000, previousBytes: 37_600_000_000),
+            .init(location: .applicationSupport, path: "/Users/me/Library/Application Support", bytes: 31_000_000_000, previousBytes: 30_900_000_000),
+            .init(location: .nodeModules, path: "/Users/me", bytes: 22_000_000_000, previousBytes: 21_000_000_000),
+            .init(location: .deviceSupport, path: "/Users/me/Library/Developer/Xcode", bytes: 18_000_000_000, previousBytes: 18_000_000_000),
+            .init(location: .npm, path: "/Users/me/.npm", bytes: 9_000_000_000, previousBytes: 8_800_000_000),
+        ]
+    )
+}
+
+extension StorageScanScheduler {
+    /// 見本データとプレビュー用。du を走らせず、前回の結果に見本の値を出す
+    static func sampleData() -> StorageScanScheduler {
+        let defaults = UserDefaults.preview
+        defaults.set(try? JSONEncoder().encode(StorageScan.sample), forKey: lastScanKey)
+        return StorageScanScheduler(diskUsage: PreviewDiskUsage(), defaults: defaults)
+    }
+}
+
+/// 押しても走査せず、見本の値を今の時刻で返す
+private struct PreviewDiskUsage: StorageScanning {
+    func scan(previous: StorageScan?) async -> StorageScan {
+        StorageScan(date: .now, previousDate: previous?.date, locations: StorageScan.sample.locations)
+    }
 }

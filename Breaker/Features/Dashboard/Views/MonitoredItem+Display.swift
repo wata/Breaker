@@ -90,7 +90,7 @@ extension MonitoredItem {
         case .cronJob(let job):
             job.errorLog
 
-        case .folderAction, .network, .sourceFailure:
+        case .folderAction, .network, .systemLoad, .storage, .sourceFailure:
             nil
         }
     }
@@ -107,7 +107,7 @@ extension MonitoredItem {
         case .cronJob(let job):
             (job.lastRun, job.schedule?.nextRun(after: now, lastRun: nil))
 
-        case .folderAction, .network, .sourceFailure:
+        case .folderAction, .network, .systemLoad, .storage, .sourceFailure:
             nil
         }
     }

@@ -239,18 +239,21 @@ struct ItemActionTests {
         let unavailable = ItemAction.unavailablePromptAction
         #expect(unavailable.title == action.title)
         #expect(unavailable.systemImage == action.systemImage)
-        #expect(action.systemImage == "document.on.document")
+        #expect(action.systemImage == "sparkles")
         #expect(!unavailable.isEnabled)
         #expect(unavailable.operation == .unavailable)
     }
 
-    @Test func onlyLaunchdAndCronOfferPrompt() {
-        let others = MonitoredItem.samples.filter { ![.launchdJob, .cronJob].contains($0.kind) } + [MonitoredItem.sampleSourceFailure]
-        #expect(!others.isEmpty)
+    /// フォルダアクションと検出の失敗には出さない。ネットワーク・負荷・ストレージは正常でも聞けるよう、いつでも押せる
+    @Test func promptIsOfferedExceptFolderActionsAndFailures() {
+        let others = MonitoredItem.samples.filter { $0.kind == .folderAction } + [MonitoredItem.sampleSourceFailure]
         #expect(others.allSatisfy { $0.promptAction == nil })
         let crons = MonitoredItem.samples.filter { $0.kind == .cronJob }
         #expect(!crons.isEmpty)
         #expect(crons.allSatisfy { $0.promptAction != nil })
+        let states = [MonitoredItem.sampleNetwork, MonitoredItem.sampleSystemLoad, MonitoredItem.sampleStorage]
+        #expect(MonitoredItem.sampleNetwork.status == .ok)
+        #expect(states.allSatisfy { $0.promptAction?.isEnabled == true })
     }
 
     @Test func sourceFailureHasNoActions() {
