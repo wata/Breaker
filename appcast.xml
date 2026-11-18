@@ -3,6 +3,18 @@
     <channel>
         <title>Breaker</title>
         <item>
+            <title>1.3.0</title>
+            <pubDate>Thu, 19 Nov 2026 04:36:22 +0900</pubDate>
+            <sparkle:version>8</sparkle:version>
+            <sparkle:shortVersionString>1.3.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <description sparkle:format="markdown"><![CDATA[- New: System load. Breaker notifies you when one app keeps using the CPU (half a core or more on average for 10 minutes), when your Mac gets hot enough to slow its CPU, or when memory runs low. Short spikes such as a build don't count. The item shows which apps are using the CPU (100% = one core), when the app at fault started, and a 24-hour history.
+- New: Storage. Breaker notifies you when less than 10% of your startup disk is free. Every 6 hours it measures folders that tend to grow — Xcode DerivedData, simulators, caches, node_modules, npm and Gradle caches, and more — and shows what grew since the last scan on a bar of your disk. You can also scan now from the toolbar or the Item menu. No extra permissions are needed.
+- Copy Prompt for AI now works for the network, system load and storage items too, even when nothing is wrong, and has a new icon.
+]]></description>
+            <enclosure url="https://github.com/wata/Breaker/releases/download/1.3.0/Breaker-1.3.0.zip" length="5887740" type="application/octet-stream" sparkle:edSignature="eeiCUW3drxaPnIAN2W9Mj+3MLU0cekks9f1YXKyx48nZQg+UcLWoeUUgtJ751O2mLUiaYeomRm4rf6egVYV6DQ=="/>
+        </item>
+        <item>
             <title>1.2.1</title>
             <pubDate>Mon, 16 Nov 2026 23:54:05 +0900</pubDate>
             <sparkle:version>7</sparkle:version>
