@@ -13,7 +13,7 @@ Scheduled scripts fail silently. Breaker was born after one of mine kept failing
 ## Features
 
 - **One list for everything you scheduled**: launchd agents in `~/Library/LaunchAgents`, your crontab, and Folder Actions (AppleScript and Automator). Agents and daemons in `/Library` can be shown too, view only.
-- **Network health**: connection, router, internet and DNS checked every minute, with ping latency and packet loss, Wi-Fi signal, and download/upload speed measured with macOS's `networkQuality` (hourly by default, about 300 MB each). You're notified only when the connection is down.
+- **Network health**: connection, router, internet and DNS checked every minute, with ping latency and packet loss, Wi-Fi signal, and download/upload speed measured with macOS's `networkQuality` (hourly by default, about 300 MB each, skipped over a personal hotspot or in Low Data Mode). You're notified only when the connection is down.
 - **System load**: notified when one app keeps using the CPU (half a core or more for 10 minutes), when your Mac gets hot enough to slow its CPU, or when memory runs low — not for short spikes like a build. See which app it is and since when, with a 24-hour history.
 - **Storage**: notified when less than 10% of your startup disk is free. Folders that tend to grow — Xcode DerivedData, simulators, caches, node_modules, npm and Gradle caches, and more — are measured every 6 hours, so you can see what grew since the last scan. No Full Disk Access needed.
 - **Catches failures exit codes miss**: a job that exited with an error, isn't loaded, missed a scheduled run, points to a script or interpreter that no longer exists, or wrote an error to its log.
@@ -39,7 +39,7 @@ brew install --cask wata/tap/breaker
 
 On first launch, Breaker asks for permission to send notifications and to control System Events (to read your Folder Actions).
 
-Choose how often to measure the speed in Settings (⌘,). Use the filter in the sidebar to show launchd jobs installed by apps, or only items with issues.
+Choose how often to measure the speed in Settings (⌘,). To show the Wi-Fi network name, turn it on there too; Breaker asks for Location Services only for this, and doesn't use your location. Use the filter in the sidebar to show launchd jobs installed by apps, or only items with issues.
 
 ## Development
 
