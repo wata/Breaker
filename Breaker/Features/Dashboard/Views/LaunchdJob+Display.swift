@@ -67,7 +67,7 @@ extension Schedule.Trigger {
         }
     }
 
-    /// 色は付けず、形だけで見分ける。状態の色（緑・橙・赤）と取り違えないようにする
+    /// 詳細の種類のタグで名前に添える。色は付けない（`ItemDetailView.TriggerTags`）
     var systemImage: String {
         switch self {
         case .keepAlive:

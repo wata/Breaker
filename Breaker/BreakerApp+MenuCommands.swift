@@ -53,6 +53,12 @@ extension BreakerApp {
 
                 Divider()
 
+                ItemActionMenuItems(actions: [item?.editActions.first ?? ItemAction.unavailableEditAction]) { action in
+                    request(action, on: item)
+                }
+
+                Divider()
+
                 ItemActionMenuItems(actions: [item?.promptAction ?? ItemAction.unavailablePromptAction]) { action in
                     request(action, on: item)
                 }

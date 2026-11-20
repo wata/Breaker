@@ -211,6 +211,18 @@ struct ItemActionTests {
         #expect(MonitoredItem.samples.filter { $0.kind != .launchdJob }.allSatisfy { $0.editActions.isEmpty })
     }
 
+    /// メニューバーの「項目」では書き換えられない項目でも同じ名前と絵で無効で見せるので、詳細の「編集…」と同じ操作とずれないこと
+    @Test func unavailableEditActionMatchesEditAction() throws {
+        let job = MonitoredItem.LaunchdJob.stub()
+        let item = MonitoredItem(key: job.label, name: job.label, status: .ok, detail: .launchdJob(job))
+        let action = try #require(item.editActions.first)
+        let unavailable = ItemAction.unavailableEditAction
+        #expect(unavailable.title == action.title)
+        #expect(unavailable.systemImage == action.systemImage)
+        #expect(!unavailable.isEnabled)
+        #expect(unavailable.operation == .unavailable)
+    }
+
     /// launchd と cron では常に出し、調べることのある異常時だけ押せる。状態を変えないので一覧は取り直さない
     @Test(arguments: [
         (ItemStatus.failed(reason: "Exit code 1"), true),

@@ -50,6 +50,11 @@ struct ItemAction: Identifiable, Hashable, Sendable {
     static var unavailablePromptAction: ItemAction {
         ItemAction(title: copyPromptTitle, systemImage: copyPromptSystemImage, operation: .unavailable, isEnabled: false)
     }
+
+    /// スケジュールを書き換えられない項目（launchd ジョブ以外・`/Library` のジョブ）を選んでいるときにメニューバーの「項目」で無効で見せる。`MonitoredItem.editActions` に名前と絵を合わせる
+    static var unavailableEditAction: ItemAction {
+        ItemAction(title: editScheduleTitle, systemImage: editScheduleSystemImage, operation: .unavailable, isEnabled: false)
+    }
 }
 
 extension ItemAction {
@@ -64,6 +69,14 @@ extension ItemAction {
 
     static var reloadTitle: String {
         String(localized: "Reload", comment: "Action that loads an unloaded launchd job back into launchd")
+    }
+
+    static var editScheduleTitle: String {
+        String(localized: "Edit Schedule…")
+    }
+
+    static var editScheduleSystemImage: String {
+        "calendar.badge.clock"
     }
 
     static var showInFinderTitle: String {
@@ -226,7 +239,7 @@ extension MonitoredItem {
             case .launchdJob(let job) = detail,
             job.origin.isManageable
         {
-            [ItemAction(title: String(localized: "Edit Schedule…"), systemImage: "calendar.badge.clock", operation: .editSchedule(job))]
+            [ItemAction(title: ItemAction.editScheduleTitle, systemImage: ItemAction.editScheduleSystemImage, operation: .editSchedule(job))]
         } else {
             []
         }

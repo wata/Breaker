@@ -414,7 +414,10 @@ struct AppModelTests {
         #expect(reloaded.itemNotes == [item.id: "メモ"])
     }
 
-    /// スクリーンショット用の見本。見本の項目がすべて並び、ログの書かれた失敗の項目を選んだ状態で始まる
+    /**
+     スクリーンショット用の見本。正常な項目はすべて並び、異常は種類ごとの代表だけに絞って下のネットワークの節までウインドウに収める。
+     ログの書かれた失敗の項目を選んだ状態で始まる
+     */
     @Test func sampleDataSelectsFailureWithLogs() throws {
         let appModel = AppModel.sampleData()
         let selected = try #require(appModel.selectedItem)
@@ -423,7 +426,10 @@ struct AppModelTests {
             return
         }
 
-        #expect(Set(appModel.items.map(\.id)) == Set(MonitoredItem.samples.map(\.id)))
+        let ids = Set(appModel.items.map(\.id))
+        #expect(MonitoredItem.samples.filter { !$0.status.isAbnormal }.allSatisfy { ids.contains($0.id) })
+        #expect(appModel.items.count { $0.status.isAbnormal } == 5)
+        #expect(ids.isSuperset(of: [MonitoredItem.sampleSystemLoad.id, MonitoredItem.sampleStorage.id, MonitoredItem.sampleNetwork.id]))
         #expect(selected.id == MonitoredItem.sampleFailureWithLogs.id)
         #expect(selected.status.isFailed)
         #expect(FileManager.default.fileExists(atPath: try #require(job.standardErrorPath)))

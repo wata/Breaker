@@ -170,7 +170,7 @@ struct LaunchdActivityTests {
         let english = Locale(identifier: "en_US")
         let japanese = Locale(identifier: "ja_JP")
         #expect(Section.serviceSummary(of: .init(state: "not running", pid: nil, runs: 58, lastExit: .code(1)), locale: english) == "58 runs since loaded · Exit code 1")
-        #expect(Section.serviceSummary(of: .init(state: "not running", pid: nil, runs: 58, lastExit: .code(1)), locale: japanese) == "58 回実行（読み込み後） · 終了コード 1")
+        #expect(Section.serviceSummary(of: .init(state: "not running", pid: nil, runs: 58, lastExit: .code(1)), locale: japanese) == "58回実行（読み込み後） · 終了コード 1")
         #expect(Section.serviceSummary(of: .init(state: "running", pid: 812, runs: 1, lastExit: .never), locale: english) == "1 run since loaded")
         // 0 は概要の「正常」と線の ✓ が言うので添えない
         #expect(Section.serviceSummary(of: .init(state: "not running", pid: nil, runs: 4, lastExit: .code(0)), locale: english) == "4 runs since loaded")

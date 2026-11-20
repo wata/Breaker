@@ -2,10 +2,10 @@ import SwiftUI
 
 extension ItemDetailView {
     /**
-     launchd ジョブの動きを図で見せる。主役は次回までの残り時間の大きな数字1つで、実行回数と前回の終了はその下の小さな1行にまとめる
-     （失敗の見出しより目立たせないため。利用者の判断）。その下のタイムラインに、予定・前回・走らなかった予定・今を並べる。
+     launchd ジョブの動きを図で見せる。主役は次回までの残り時間の大きな数字1つで、見出しを次回の日時にする（残りから日時を暗算させず、行も増やさない。利用者の判断）。
+     実行回数と前回の終了はさらに下の小さな1行にまとめる（失敗の見出しより目立たせないため。利用者の判断）。その下のタイムラインに、予定・前回・走らなかった予定・今を並べる。
      タイムラインに印で出した前回・次回は、概要の文から外す（`MonitoredItem.headerRunSummary(now:)`）。
-     右上にジョブの種類（時刻指定・間隔・常駐など）を記号だけで添える（比較した中から利用者が選んだ、いちばん静かな見せ方）
+     右上にジョブの種類（時刻指定・間隔・常駐など）を記号と名前のタグで添える（`TriggerTags`）
      */
     struct LaunchdActivitySection: View {
         let job: MonitoredItem.LaunchdJob
@@ -21,12 +21,13 @@ extension ItemDetailView {
                     // 残り時間と「今」の位置が古びないよう、分が変わるたびに描き直す
                     TimelineView(.everyMinute) { context in
                         VStack(alignment: .leading, spacing: Spacing.standard) {
-                            HStack(alignment: .top, spacing: Spacing.standard) {
+                            // 種類のタグの文字を、左の見出し（次回の日時）と同じ行に揃える
+                            HStack(alignment: .firstTextBaseline, spacing: Spacing.standard) {
                                 VStack(alignment: .leading, spacing: Spacing.hairline) {
                                     // 予定のあるジョブは次回までの残り、動き続けている常駐ジョブは起動からの稼働時間を主役にする
                                     let figure = RunTimeline.nextRun(of: job, status: status, now: context.date).map { nextRun in
                                         DurationFigure(
-                                            title: String(localized: "Until Next Run", comment: "Title of the countdown to the next run of a launchd job in the detail"),
+                                            title: MonitoredItem.nextRunText(nextRun, now: context.date),
                                             from: context.date,
                                             to: nextRun
                                         )
@@ -50,7 +51,7 @@ extension ItemDetailView {
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                                TriggerSymbols(triggers: job.schedule.triggers)
+                                TriggerTags(triggers: job.schedule.triggers)
                             }
 
                             if let timeline = RunTimeline(job: job, status: status, now: context.date) {
@@ -64,7 +65,7 @@ extension ItemDetailView {
         }
 
         /**
-         `58 回実行（読み込み後） · 終了コード 1`。終了コードは失敗したときだけ添える。0 は概要の「正常」と線の ✓ が言うので繰り返さない（利用者の判断）。
+         `58回実行（読み込み後） · 終了コード 1`。終了コードは失敗したときだけ添える。0 は概要の「正常」と線の ✓ が言うので繰り返さない（利用者の判断）。
          まだ一度も終了していなければ終了の部分を出さない
          */
         nonisolated static func serviceSummary(of service: LaunchdServiceInfo, locale: Locale = .current) -> String {
@@ -101,20 +102,32 @@ extension ItemDetailView {
         }
     }
 
-    /// ジョブの種類の記号。色は付けず形だけで見分け、名前はポインタを載せたときと読み上げで伝える
-    struct TriggerSymbols: View {
+    /**
+     ジョブの種類のタグ。記号だけでは何を指すか分かりにくかったので名前を並べる（利用者の判断）。
+     色は付けない。状態の色（緑・橙・赤）と取り違えないようにする
+     */
+    struct TriggerTags: View {
         let triggers: [Schedule.Trigger]
 
         var body: some View {
-            HStack(spacing: Spacing.tight) {
+            HStack(spacing: Spacing.micro) {
                 ForEach(triggers, id: \.self) { trigger in
-                    Image(systemName: trigger.systemImage)
-                        .help(trigger.title)
-                        .accessibilityLabel(trigger.title)
+                    HStack(spacing: Spacing.micro) {
+                        // 記号の名前（calendar など）まで読み上げられないよう、読み上げは名前だけにする
+                        Image(systemName: trigger.systemImage)
+                            .accessibilityHidden(true)
+
+                        Text(trigger.title)
+                    }
+                    .padding(.horizontal, Spacing.tight)
+                    .padding(.vertical, Spacing.hairline)
+                    // 地は面の色（fill）にする。文字の階層の色（.quaternary）を面に使わない（HIG の Color）
+                    .background(.fill.quaternary, in: .rect(cornerRadius: Layout.triggerTagCornerRadius))
                 }
             }
-            .font(.Body.regular)
+            .font(.Base.regular)
             .foregroundStyle(.secondary)
+            .fixedSize()
             .accessibilityElement(children: .combine)
         }
     }

@@ -30,6 +30,8 @@ enum Layout {
     static let chartLineDash: [CGFloat] = [3, 3]
     /// グラフをホバーしたときの値の札の角丸。macOS のツールチップやポップオーバーと同じくらいの丸み
     static let chartTooltipCornerRadius: CGFloat = 6
+    /// launchd の詳細の種類のタグの角丸。ピルにせず、小さな札と読める丸み
+    static let triggerTagCornerRadius: CGFloat = 4
     /// ストレージの内訳のバーの高さ。細い場所の色も見分けられる太さ
     static let storageBarHeight: CGFloat = 12
     /// ストレージの一覧の行の頭の点と、バーの説明の点。小さくても色が読み取れる大きさ

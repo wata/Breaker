@@ -297,7 +297,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld 回実行（読み込み後）"
+            "value" : "%lld回実行（読み込み後）"
           }
         }
       }
@@ -2844,7 +2844,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "networkQuality が %lld 秒以内に終わりませんでした"
+            "value" : "networkQuality が %lld秒以内に終わりませんでした"
           }
         }
       }
@@ -4936,23 +4936,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "接続できません"
-          }
-        }
-      }
-    },
-    "Until Next Run" : {
-      "comment" : "Title of the countdown to the next run of a launchd job in the detail",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Until Next Run"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "次回まで"
           }
         }
       }

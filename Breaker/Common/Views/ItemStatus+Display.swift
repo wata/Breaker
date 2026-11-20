@@ -67,8 +67,7 @@ extension ItemStatus {
         }
     }
 
-    /// 要確認の記号。サイドバーの要確認の節の見出しにも使う
-    static let warningSystemImage = "exclamationmark.triangle.fill"
+    private static let warningSystemImage = "exclamationmark.triangle.fill"
 
     /// 状態の記号のうち、いちばん幅の広いもの（三角）。サイドバーの行で記号の枠の幅をそろえるのに使う
     static let widestSystemImage = warningSystemImage

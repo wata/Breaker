@@ -348,14 +348,18 @@ extension AppModel {
 
     /**
      `-BreakerSampleData YES` で起動したときの一覧（`AppEnvironment.usesSampleData`）。スクリーンショットで詳細のログの欄も埋まるよう、
-     ログ付きの見本を同じ ID の項目と差し替え、代表的な失敗（#Preview "launchd (Failed with Logs)" と同じもの）を選んでおく
+     ログ付きの見本を同じ ID の項目と差し替え、代表的な失敗（#Preview "launchd (Failed with Logs)" と同じもの）を選んでおく。
+     要確認の節が長いとネットワークなど下の節がウインドウに収まらないので、異常は種類ごとに代表だけを残す
      */
     static func sampleData() -> AppModel {
         let failure = MonitoredItem.sampleFailureWithLogs
         let withLogs = [failure, MonitoredItem.sampleLogErrorWithLogs]
-        let items = MonitoredItem.samples.map { item in
-            withLogs.first { $0.id == item.id } ?? item
-        }
+        let shownIssues: Set = [failure.name, MonitoredItem.sampleLogError.name, "fetch-feeds.py", MonitoredItem.sampleSystemLoad.name, MonitoredItem.sampleStorage.name]
+        let items = MonitoredItem.samples
+            .filter { !$0.status.isAbnormal || shownIssues.contains($0.name) }
+            .map { item in
+                withLogs.first { $0.id == item.id } ?? item
+            }
         return preview(selectedID: failure.id, items: items)
     }
 }

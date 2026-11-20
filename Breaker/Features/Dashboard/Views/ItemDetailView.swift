@@ -81,6 +81,7 @@ struct ItemDetailView: View {
                 controls: item.controlActions,
                 promptAction: item.promptAction,
                 secondaryControls: item.secondaryControlActions,
+                edits: item.editActions,
                 files: item.fileActions(),
                 measure: item.networkHealth.map { .init(scheduler: speedTestScheduler, isOnline: $0.isOnline) },
                 scan: item.storageUsage.map { _ in storageScanScheduler },

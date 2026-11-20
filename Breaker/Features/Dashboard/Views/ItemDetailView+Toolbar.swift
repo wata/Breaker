@@ -2,7 +2,8 @@ import SwiftUI
 
 extension ItemDetailView {
     /**
-     よく使う状態を変える操作はアイコンのボタンで並べ、それ以外（読み込み直すとファイルを開く操作）は1つのメニューにまとめる。
+     よく使う状態を変える操作はアイコンのボタンで並べ、それ以外（読み込み直す・スケジュールの編集・ファイルを開く操作）は1つのメニューにまとめる。
+     メニューの並びはサイドバーの右クリックメニューと同じにする。
      ボタンの組は状態で変えず、できないものは無効にする。ツールバーのボタンは文字を出さないので、何をするかはツールチップで伝える
      */
     struct Toolbar: ToolbarContent {
@@ -10,6 +11,8 @@ extension ItemDetailView {
         let controls: [ItemAction]
         let promptAction: ItemAction?
         let secondaryControls: [ItemAction]
+        /// スケジュールの行の「編集…」と同じ操作。行まで降りなくても開けるようにする
+        let edits: [ItemAction]
         let files: [ItemAction]
         /// ネットワーク項目のときだけ。計測は `ItemActionPerformer` ではなくスケジューラが受け持つので、操作の組とは別に渡す
         let measure: MeasureButton.Model?
@@ -42,15 +45,16 @@ extension ItemDetailView {
                         .id(itemID)
                 }
 
-                if !secondaryControls.isEmpty || !files.isEmpty {
+                let menuGroups = [secondaryControls, edits, files].filter { !$0.isEmpty }
+                if !menuGroups.isEmpty {
                     Menu("More", systemImage: "ellipsis.circle") {
-                        ItemActionMenuItems(actions: secondaryControls, perform: perform)
+                        ForEach(menuGroups, id: \.self) { actions in
+                            if actions != menuGroups.first {
+                                Divider()
+                            }
 
-                        if !secondaryControls.isEmpty && !files.isEmpty {
-                            Divider()
+                            ItemActionMenuItems(actions: actions, perform: perform)
                         }
-
-                        ItemActionMenuItems(actions: files, perform: perform)
                     }
                     .help("More")
                     .disabled(isLocked)
